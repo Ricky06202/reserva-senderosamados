@@ -1,20 +1,38 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native'
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
+import { HomeScreen } from './src/screens/HomeScreen'
+import { AddReservationScreen } from './src/screens/AddReservationScreen'
+import { StatusBar } from 'expo-status-bar'
+import './global.css'
+import { Ionicons } from '@expo/vector-icons'
+
+const Tab = createBottomTabNavigator()
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
-}
+    <NavigationContainer>
+      <Tab.Navigator
+        screenOptions={({ route }) => ({
+          headerShown: false,
+          tabBarIcon: ({ focused, color, size }) => {
+            let iconName: keyof typeof Ionicons.glyphMap = 'calendar'
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+            if (route.name === 'Calendario') {
+              iconName = focused ? 'calendar' : 'calendar-outline'
+            } else if (route.name === 'Nueva Reserva') {
+              iconName = focused ? 'add-circle' : 'add-circle-outline'
+            }
+
+            return <Ionicons name={iconName} size={size} color={color} />
+          },
+          tabBarActiveTintColor: '#3B82F6',
+          tabBarInactiveTintColor: 'gray',
+        })}
+      >
+        <Tab.Screen name="Calendario" component={HomeScreen} />
+        <Tab.Screen name="Nueva Reserva" component={AddReservationScreen} />
+      </Tab.Navigator>
+      <StatusBar style="auto" />
+    </NavigationContainer>
+  )
+}

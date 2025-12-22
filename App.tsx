@@ -15,7 +15,7 @@ const Tab = createBottomTabNavigator()
 
 export default function App() {
   const [loaded, error] = Font.useFonts({
-    ...Ionicons.font,
+    Ionicons: require('./assets/fonts/Ionicons.ttf'),
   })
 
   useEffect(() => {

@@ -5,10 +5,28 @@ import { AddReservationScreen } from './src/screens/AddReservationScreen'
 import { StatusBar } from 'expo-status-bar'
 import './global.css'
 import { Ionicons } from '@expo/vector-icons'
+import * as Font from 'expo-font'
+import * as SplashScreen from 'expo-splash-screen'
+import { useEffect } from 'react'
+
+SplashScreen.preventAutoHideAsync()
 
 const Tab = createBottomTabNavigator()
 
 export default function App() {
+  const [loaded, error] = Font.useFonts({
+    ...Ionicons.font,
+  })
+
+  useEffect(() => {
+    if (loaded || error) {
+      SplashScreen.hideAsync()
+    }
+  }, [loaded, error])
+
+  if (!loaded && !error) {
+    return null
+  }
   return (
     <NavigationContainer>
       <Tab.Navigator

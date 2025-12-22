@@ -303,6 +303,7 @@ export const HomeScreen = () => {
             )}
             theme={{
               todayTextColor: '#3B82F6',
+              arrowColor: '#3B82F6',
               textMonthFontWeight: 'bold',
               textDayHeaderFontWeight: 'bold',
             }}

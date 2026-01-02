@@ -1,3 +1,10 @@
+export interface ApiAnnotation {
+  id: number
+  reservaId: number
+  contenido: string
+  createdAt?: string
+}
+
 export interface ApiReservation {
   id: number
   nombre: string
@@ -7,6 +14,9 @@ export interface ApiReservation {
   total: string
   fechaInicio: string
   fechaFin: string
+  casaId: number
+  estadoId: number
+  anotaciones?: ApiAnnotation[]
 }
 
 export interface ApiRoom {

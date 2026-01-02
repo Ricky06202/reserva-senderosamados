@@ -8,12 +8,15 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  TextInput,
+  Platform,
 } from 'react-native'
 import { Calendar, DateData, LocaleConfig } from 'react-native-calendars'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { ReservationCard } from '../components/ReservationCard'
 import { apiClient } from '../api/client'
+import { ApiRoom, ApiStatus } from '../api/types'
 import { Reservation } from '../data/reservations'
 import { format, parseISO, eachDayOfInterval } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -137,6 +140,30 @@ export const HomeScreen = () => {
     null
   )
 
+  // Edit State
+  const [editModalVisible, setEditModalVisible] = useState(false)
+  const [editingReservation, setEditingReservation] =
+    useState<Reservation | null>(null)
+  const [rooms, setRooms] = useState<ApiRoom[]>([])
+  const [statuses, setStatuses] = useState<ApiStatus[]>([])
+  const [editForm, setEditForm] = useState<{
+    name: string
+    roomId: number
+    peopleCount: string
+    statusId: number
+    totalPrice: string
+    startDate: string
+    endDate: string
+  }>({
+    name: '',
+    roomId: 0,
+    peopleCount: '',
+    statusId: 0,
+    totalPrice: '',
+    startDate: '',
+    endDate: '',
+  })
+
   const fetchReservations = useCallback(async () => {
     try {
       const data = await apiClient.getReservations()
@@ -149,10 +176,24 @@ export const HomeScreen = () => {
     }
   }, [])
 
+  const fetchMetadata = useCallback(async () => {
+    try {
+      const [roomsData, statusesData] = await Promise.all([
+        apiClient.getRooms(),
+        apiClient.getStatuses(),
+      ])
+      setRooms(roomsData)
+      setStatuses(statusesData)
+    } catch (error) {
+      console.error('Error fetching metadata:', error)
+    }
+  }, [])
+
   useFocusEffect(
     useCallback(() => {
       fetchReservations()
-    }, [fetchReservations])
+      fetchMetadata()
+    }, [fetchReservations, fetchMetadata])
   )
 
   const onRefresh = useCallback(() => {
@@ -264,6 +305,111 @@ export const HomeScreen = () => {
     }
   }
 
+  const handleEdit = (id: string) => {
+    const reservation = reservations.find((r) => r.id === id)
+    if (!reservation) return
+
+    setEditingReservation(reservation)
+    setEditForm({
+      name: reservation.name,
+      roomId: reservation.roomId || 0,
+      peopleCount: String(reservation.peopleCount),
+      statusId: reservation.statusId || 0,
+      totalPrice: String(reservation.totalPrice),
+      startDate: reservation.startDate,
+      endDate: reservation.endDate,
+    })
+    setEditModalVisible(true)
+  }
+
+  const handleUpdate = async () => {
+    if (!editingReservation) return
+
+    setLoading(true)
+    const success = await apiClient.updateReservation(editingReservation.id, {
+      name: editForm.name,
+      roomId: editForm.roomId,
+      peopleCount: Number(editForm.peopleCount),
+      statusId: editForm.statusId,
+      totalPrice: Number(editForm.totalPrice),
+      startDate: editForm.startDate,
+      endDate: editForm.endDate,
+    })
+    setLoading(false)
+
+    if (success) {
+      setEditModalVisible(false)
+      setEditingReservation(null)
+      fetchReservations()
+      Alert.alert('Éxito', 'Reserva actualizada correctamente')
+    } else {
+      Alert.alert('Error', 'No se pudo actualizar la reserva')
+    }
+  }
+
+  const handleAddAnnotation = async (reservaId: string, content: string) => {
+    // Optimistic update
+    const previousReservations = [...reservations]
+    setReservations((current) =>
+      current.map((res) => {
+        if (res.id === reservaId) {
+          return {
+            ...res,
+            anotaciones: [
+              ...(res.anotaciones || []),
+              { id: 'temp-' + Date.now(), content },
+            ],
+          }
+        }
+        return res
+      })
+    )
+
+    const newAnnotation = await apiClient.addAnnotation(reservaId, content)
+
+    if (newAnnotation) {
+      // Update with real ID
+      setReservations((current) =>
+        current.map((res) => {
+          if (res.id === reservaId) {
+            return {
+              ...res,
+              anotaciones: res.anotaciones?.map((a) =>
+                a.content === content && a.id.startsWith('temp-')
+                  ? newAnnotation
+                  : a
+              ),
+            }
+          }
+          return res
+        })
+      )
+    } else {
+      // Revert if failed
+      setReservations(previousReservations)
+      Alert.alert('Error', 'No se pudo agregar la anotación')
+    }
+  }
+
+  const handleDeleteAnnotation = async (annotationId: string) => {
+    // Optimistic update
+    const previousReservations = [...reservations]
+    setReservations((current) =>
+      current.map((res) => ({
+        ...res,
+        anotaciones: res.anotaciones?.filter((a) => a.id !== annotationId),
+      }))
+    )
+
+    const success = await apiClient.deleteAnnotation(annotationId)
+
+    if (!success) {
+      // Revert if failed
+      setReservations(previousReservations)
+      Alert.alert('Error', 'No se pudo eliminar la anotación')
+    }
+  }
+
   if (loading && !refreshing) {
     return (
       <View className="flex-1 justify-center items-center bg-gray-50">
@@ -323,6 +469,7 @@ export const HomeScreen = () => {
                 key={res.id}
                 reservation={res}
                 onDelete={handleDelete}
+                onEdit={handleEdit}
               />
             ))
           ) : (
@@ -348,7 +495,13 @@ export const HomeScreen = () => {
                 Del {format(parseISO(res.startDate), 'dd MMM', { locale: es })}{' '}
                 al {format(parseISO(res.endDate), 'dd MMM', { locale: es })}
               </Text>
-              <ReservationCard reservation={res} onDelete={handleDelete} />
+              <ReservationCard
+                reservation={res}
+                onDelete={handleDelete}
+                onEdit={handleEdit}
+                onAddAnnotation={handleAddAnnotation}
+                onDeleteAnnotation={handleDeleteAnnotation}
+              />
             </View>
           ))}
         </View>
@@ -390,6 +543,184 @@ export const HomeScreen = () => {
                 <Text className="text-white font-bold">Eliminar</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Edit Reservation Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={editModalVisible}
+        onRequestClose={() => setEditModalVisible(false)}
+      >
+        <View className="flex-1 bg-black/60 justify-end">
+          <View className="bg-white rounded-t-3xl p-6 h-[85%]">
+            <View className="flex-row justify-between items-center mb-6">
+              <Text className="text-2xl font-bold text-gray-900">
+                Editar Reserva
+              </Text>
+              <TouchableOpacity
+                onPress={() => setEditModalVisible(false)}
+                className="bg-gray-100 p-2 rounded-full"
+              >
+                <Ionicons name="close" size={24} color="#374151" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {/* Nombre */}
+              <View className="mb-4">
+                <Text className="text-sm font-semibold text-gray-700 mb-2">
+                  Nombre del Cliente
+                </Text>
+                <TextInput
+                  className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-gray-800"
+                  value={editForm.name}
+                  onChangeText={(text) =>
+                    setEditForm({ ...editForm, name: text })
+                  }
+                  placeholder="Nombre"
+                />
+              </View>
+
+              {/* Habitación */}
+              <View className="mb-4">
+                <Text className="text-sm font-semibold text-gray-700 mb-2">
+                  Habitación
+                </Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <View className="flex-row gap-2">
+                    {rooms.map((room) => (
+                      <TouchableOpacity
+                        key={room.id}
+                        onPress={() =>
+                          setEditForm({ ...editForm, roomId: room.id })
+                        }
+                        className={`px-4 py-3 rounded-xl border ${
+                          editForm.roomId === room.id
+                            ? 'bg-blue-500 border-blue-500'
+                            : 'bg-white border-gray-200'
+                        }`}
+                      >
+                        <Text
+                          className={`font-semibold ${
+                            editForm.roomId === room.id
+                              ? 'text-white'
+                              : 'text-gray-700'
+                          }`}
+                        >
+                          {room.nombre}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </ScrollView>
+              </View>
+
+              {/* Cantidad de Personas */}
+              <View className="mb-4">
+                <Text className="text-sm font-semibold text-gray-700 mb-2">
+                  Personas
+                </Text>
+                <TextInput
+                  className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-gray-800"
+                  value={editForm.peopleCount}
+                  keyboardType="numeric"
+                  onChangeText={(text) =>
+                    setEditForm({ ...editForm, peopleCount: text })
+                  }
+                  placeholder="0"
+                />
+              </View>
+
+              {/* Fechas */}
+              <View className="flex-row gap-4 mb-4">
+                <View className="flex-1">
+                  <Text className="text-sm font-semibold text-gray-700 mb-2">
+                    Inicio (YYYY-MM-DD)
+                  </Text>
+                  <TextInput
+                    className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-gray-800"
+                    value={editForm.startDate}
+                    onChangeText={(text) =>
+                      setEditForm({ ...editForm, startDate: text })
+                    }
+                    placeholder="2025-01-01"
+                  />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-sm font-semibold text-gray-700 mb-2">
+                    Fin (YYYY-MM-DD)
+                  </Text>
+                  <TextInput
+                    className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-gray-800"
+                    value={editForm.endDate}
+                    onChangeText={(text) =>
+                      setEditForm({ ...editForm, endDate: text })
+                    }
+                    placeholder="2025-01-02"
+                  />
+                </View>
+              </View>
+
+              {/* Estado */}
+              <View className="mb-4">
+                <Text className="text-sm font-semibold text-gray-700 mb-2">
+                  Estado
+                </Text>
+                <View className="flex-row gap-3">
+                  {statuses.map((status) => (
+                    <TouchableOpacity
+                      key={status.id}
+                      onPress={() =>
+                        setEditForm({ ...editForm, statusId: status.id })
+                      }
+                      className={`flex-1 py-3 rounded-xl border items-center ${
+                        editForm.statusId === status.id
+                          ? 'bg-blue-500 border-blue-500'
+                          : 'bg-white border-gray-200'
+                      }`}
+                    >
+                      <Text
+                        className={`font-semibold ${
+                          editForm.statusId === status.id
+                            ? 'text-white'
+                            : 'text-gray-700'
+                        }`}
+                      >
+                        {status.nombre}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* Total */}
+              <View className="mb-8">
+                <Text className="text-sm font-semibold text-gray-700 mb-2">
+                  Total ($)
+                </Text>
+                <TextInput
+                  className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-gray-800 text-lg font-semibold"
+                  value={editForm.totalPrice}
+                  keyboardType="numeric"
+                  onChangeText={(text) =>
+                    setEditForm({ ...editForm, totalPrice: text })
+                  }
+                  placeholder="0.00"
+                />
+              </View>
+
+              <TouchableOpacity
+                onPress={handleUpdate}
+                className="bg-blue-500 py-4 rounded-xl items-center shadow-md shadow-blue-200 mb-8"
+              >
+                <Text className="text-white font-bold text-lg">
+                  Guardar Cambios
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
           </View>
         </View>
       </Modal>

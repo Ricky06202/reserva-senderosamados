@@ -1,3 +1,8 @@
+export interface Annotation {
+  id: string
+  content: string
+}
+
 export interface Reservation {
   id: string
   name: string
@@ -7,6 +12,9 @@ export interface Reservation {
   room: string
   totalPrice: number
   status: 'pagado' | 'por cobrar'
+  roomId?: number
+  statusId?: number
+  anotaciones?: Annotation[]
 }
 
 export const MOCK_RESERVATIONS: Reservation[] = [

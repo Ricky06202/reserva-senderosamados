@@ -147,10 +147,6 @@ export const apiClient = {
     contenido: string
   ): Promise<Annotation | null> => {
     try {
-      console.log('--- [API] Sending POST /anotaciones', {
-        reservaId,
-        contenido,
-      })
       const response = await fetch(`${API_URL}/anotaciones`, {
         method: 'POST',
         headers: {
@@ -159,16 +155,11 @@ export const apiClient = {
         body: JSON.stringify({ reservaId: Number(reservaId), contenido }),
       })
 
-      console.log('--- [API] POST /anotaciones status:', response.status)
-
       if (!response.ok) {
-        const text = await response.text()
-        console.error('--- [API] Error response body:', text)
         throw new Error('Error creating annotation')
       }
 
       const data = await response.json()
-      console.log('--- [API] Success response body:', data)
       // data format based on user request: { message: '...', id: ... }
       return {
         id: String(data.id),

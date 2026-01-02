@@ -2,6 +2,7 @@ import { ApiReservation, ApiRoom, ApiStatus } from './types'
 import { Annotation, Reservation } from '../data/reservations'
 
 const API_URL = 'https://api-reservas-senderosamados.rsanjur.com' // Android Emulator localhost
+// const API_URL = 'http://localhost:3000' // Android Emulator localhost
 
 export const apiClient = {
   getReservations: async (): Promise<Reservation[]> => {

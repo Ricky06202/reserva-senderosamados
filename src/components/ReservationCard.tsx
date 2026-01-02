@@ -28,6 +28,11 @@ export const ReservationCard = ({
     }[reservation.status] || 'bg-gray-100 text-gray-800'
 
   const handleAddAnnotation = () => {
+    console.log('--- [ReservationCard] Add Button Pressed:', {
+      id: reservation.id,
+      text: newAnnotation,
+      hasHandler: !!onAddAnnotation,
+    })
     if (newAnnotation.trim() && onAddAnnotation) {
       onAddAnnotation(reservation.id, newAnnotation)
       setNewAnnotation('')

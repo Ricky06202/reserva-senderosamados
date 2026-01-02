@@ -348,6 +348,11 @@ export const HomeScreen = () => {
   }
 
   const handleAddAnnotation = async (reservaId: string, content: string) => {
+    console.log(
+      '--- [HomeScreen] handleAddAnnotation called:',
+      reservaId,
+      content
+    )
     // Optimistic update
     const previousReservations = [...reservations]
     setReservations((current) =>

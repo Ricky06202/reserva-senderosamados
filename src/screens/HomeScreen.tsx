@@ -92,9 +92,9 @@ const DayComponent = ({ date, state, marking, onPress }: any) => {
       {dayReservations.map((mark, index) => {
         const { reservation, status, rowIndex, color } = mark
 
-        let barStyle = 'h-8 justify-center absolute'
-        let textStyle = 'text-[7px] text-white font-bold ml-1 leading-tight'
-        const topPosition = 20 + rowIndex * 34
+        let barStyle = 'h-5 justify-center absolute'
+        let textStyle = 'text-[9px] text-white font-bold ml-1 leading-tight'
+        const topPosition = 20 + rowIndex * 22
 
         if (status === 'start') barStyle += ' ml-1 rounded-l-md w-[130%] z-20'
         else if (status === 'middle') barStyle += ' w-[140%] -ml-[20%] z-10'
@@ -111,13 +111,7 @@ const DayComponent = ({ date, state, marking, onPress }: any) => {
             {(status === 'start' || status === 'single') && (
               <View>
                 <Text className={textStyle} numberOfLines={1}>
-                  {reservation.name.split(' ')[0]} ({reservation.peopleCount})
-                </Text>
-                <Text className={textStyle} numberOfLines={1}>
-                  {reservation.room}
-                </Text>
-                <Text className={textStyle} numberOfLines={1}>
-                  ${reservation.totalPrice}
+                  {reservation.name}
                 </Text>
               </View>
             )}

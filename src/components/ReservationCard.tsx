@@ -1,5 +1,7 @@
 import { View, Text, TouchableOpacity, TextInput } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import { format } from 'date-fns'
+import { es } from 'date-fns/locale'
 import { Reservation } from '../data/reservations'
 import { useState } from 'react'
 
@@ -27,6 +29,13 @@ export const ReservationCard = ({
       'por cobrar': 'bg-yellow-100 text-yellow-800',
     }[reservation.status] || 'bg-gray-100 text-gray-800'
 
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return ''
+    const [year, month, day] = dateStr.split('-').map(Number)
+    const date = new Date(year, month - 1, day)
+    return format(date, "d 'de' MMM", { locale: es })
+  }
+
   const handleAddAnnotation = () => {
     if (newAnnotation.trim() && onAddAnnotation) {
       onAddAnnotation(reservation.id, newAnnotation)
@@ -42,6 +51,13 @@ export const ReservationCard = ({
           <Text className="text-lg font-bold text-gray-800">
             {reservation.name}
           </Text>
+          <View className="flex-row items-center mt-1 mb-2">
+            <Ionicons name="calendar-outline" size={14} color="#6B7280" />
+            <Text className="text-sm text-gray-500 ml-1 capitalize">
+              {formatDate(reservation.startDate)} -{' '}
+              {formatDate(reservation.endDate)}
+            </Text>
+          </View>
           <View className="flex-row items-center flex-wrap">
             <Text className="text-sm text-gray-500 mr-2">
               👥 {reservation.peopleCount} personas

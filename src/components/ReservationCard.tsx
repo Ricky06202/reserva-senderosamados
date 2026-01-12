@@ -29,6 +29,21 @@ export const ReservationCard = ({
       'por cobrar': 'bg-yellow-100 text-yellow-800',
     }[reservation.status] || 'bg-gray-100 text-gray-800'
 
+  const getRoomColor = () => {
+    const rName = (reservation.room || '').toLowerCase()
+    const rId = reservation.roomId
+
+    if (rId === 1 || rName.includes('casa 1')) {
+      return 'bg-blue-100 text-blue-800'
+    } else if (rId === 2 || rName.includes('casa 2')) {
+      return 'bg-orange-100 text-orange-800'
+    } else if (rId === 3 || rName.includes('casa 3')) {
+      return 'bg-green-100 text-green-800'
+    } else {
+      return 'bg-gray-100 text-gray-600'
+    }
+  }
+
   const formatDate = (dateStr: string) => {
     if (!dateStr) return ''
     const [year, month, day] = dateStr.split('-').map(Number)
@@ -62,9 +77,9 @@ export const ReservationCard = ({
             <Text className="text-sm text-gray-500 mr-2">
               👥 {reservation.peopleCount} personas
             </Text>
-            <Text className="text-sm text-gray-400">
-              • 🏠 {reservation.room}
-            </Text>
+            <View className={`rounded-md px-2 py-0.5 ${getRoomColor()}`}>
+              <Text className="text-xs font-medium">🏠 {reservation.room}</Text>
+            </View>
           </View>
           <View className="flex-row items-center justify-between mt-1">
             <Text className="text-sm font-bold text-gray-900">

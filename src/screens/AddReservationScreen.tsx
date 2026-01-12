@@ -44,6 +44,15 @@ export const AddReservationScreen = () => {
     fetchRooms()
   }, [])
 
+  const getRoomSelectionColor = (id: number, name: string) => {
+    const n = (name || '').toLowerCase()
+    if (id === 1 || n.includes('casa 1')) return 'bg-blue-500 border-blue-500'
+    if (id === 2 || n.includes('casa 2'))
+      return 'bg-orange-500 border-orange-500'
+    if (id === 3 || n.includes('casa 3')) return 'bg-green-600 border-green-600'
+    return 'bg-teal-600 border-teal-600'
+  }
+
   const updateField = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
@@ -218,7 +227,7 @@ export const AddReservationScreen = () => {
                   }}
                   className={`px-4 py-2 rounded-full border ${
                     formData.roomId === roomItem.id
-                      ? 'bg-blue-600 border-blue-600'
+                      ? getRoomSelectionColor(roomItem.id, roomItem.nombre)
                       : 'bg-white border-gray-300'
                   }`}
                 >

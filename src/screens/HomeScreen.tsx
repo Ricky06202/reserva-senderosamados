@@ -158,6 +158,15 @@ export const HomeScreen = () => {
     endDate: '',
   })
 
+  const getRoomSelectionColor = (id: number, name: string) => {
+    const n = (name || '').toLowerCase()
+    if (id === 1 || n.includes('casa 1')) return 'bg-blue-500 border-blue-500'
+    if (id === 2 || n.includes('casa 2'))
+      return 'bg-orange-500 border-orange-500'
+    if (id === 3 || n.includes('casa 3')) return 'bg-green-600 border-green-600'
+    return 'bg-teal-600 border-teal-600'
+  }
+
   const fetchReservations = useCallback(async () => {
     try {
       const data = await apiClient.getReservations()
@@ -231,8 +240,22 @@ export const HomeScreen = () => {
         }
       }
 
-      const isPaid = res.status === 'pagado'
-      const color = isPaid ? 'bg-green-500' : 'bg-yellow-500'
+      // Asignar color según la casa (Casa 1, 2, 3)
+      // Colores daltónico-friendly: Azul, Naranja, Morado
+      let color = 'bg-gray-500'
+      const rName = (res.room || '').toLowerCase()
+      const rId = res.roomId
+
+      if (rId === 1 || rName.includes('casa 1')) {
+        color = 'bg-blue-500'
+      } else if (rId === 2 || rName.includes('casa 2')) {
+        color = 'bg-orange-500' // Vermilion clone
+      } else if (rId === 3 || rName.includes('casa 3')) {
+        color = 'bg-green-600' // Green
+      } else {
+        // Fallback or other rooms
+        color = 'bg-teal-600'
+      }
 
       days.forEach((day, index) => {
         const dateStr = format(day, 'yyyy-MM-dd')
@@ -595,7 +618,7 @@ export const HomeScreen = () => {
                         }
                         className={`px-4 py-3 rounded-xl border ${
                           editForm.roomId === room.id
-                            ? 'bg-blue-500 border-blue-500'
+                            ? getRoomSelectionColor(room.id, room.nombre)
                             : 'bg-white border-gray-200'
                         }`}
                       >

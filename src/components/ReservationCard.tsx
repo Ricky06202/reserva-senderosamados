@@ -60,28 +60,28 @@ export const ReservationCard = ({
   }
 
   return (
-    <View className="mb-3 rounded-xl bg-white p-4 shadow-sm border border-gray-100">
-      <View className="flex-row items-center justify-between">
+    <View className="p-4 mb-3 bg-white rounded-xl border border-gray-100 shadow-sm">
+      <View className="flex-row justify-between items-center">
         <View className="flex-1">
           <Text className="text-lg font-bold text-gray-800">
             {reservation.name}
           </Text>
           <View className="flex-row items-center mt-1 mb-2">
             <Ionicons name="calendar-outline" size={14} color="#6B7280" />
-            <Text className="text-sm text-gray-500 ml-1 capitalize">
+            <Text className="ml-1 text-sm text-gray-500 capitalize">
               {formatDate(reservation.startDate)} -{' '}
               {formatDate(reservation.endDate)}
             </Text>
           </View>
-          <View className="flex-row items-center flex-wrap">
-            <Text className="text-sm text-gray-500 mr-2">
+          <View className="flex-row flex-wrap items-center">
+            <Text className="mr-2 text-sm text-gray-500">
               👥 {reservation.peopleCount} personas
             </Text>
             <View className={`rounded-md px-2 py-0.5 ${getRoomColor()}`}>
               <Text className="text-xs font-medium">🏠 {reservation.room}</Text>
             </View>
           </View>
-          <View className="mt-2 border-t border-gray-100 pt-2">
+          <View className="pt-2 mt-2 border-t border-gray-100">
             <View className="flex-row justify-between items-center mb-1">
               <Text className="text-xs text-gray-500">Total Hospedaje:</Text>
               <Text className="text-sm font-bold text-gray-900">
@@ -102,7 +102,7 @@ export const ReservationCard = ({
             </View>
           </View>
 
-          <View className="flex-row items-center justify-between mt-3">
+          <View className="flex-row justify-between items-center mt-3">
             <View className="flex-row items-center">
               {reservation.bookingCommission !== undefined &&
                 reservation.bookingCommission > 0 && (
@@ -125,7 +125,7 @@ export const ReservationCard = ({
                   </View>
                 )}
             </View>
-            <View className={`rounded-full px-3 py-1 ${statusColor}`}>
+            <View className={`px-3 py-1 rounded-full ${statusColor}`}>
               <Text className="text-xs font-medium capitalize">
                 {reservation.status}
               </Text>
@@ -157,9 +157,9 @@ export const ReservationCard = ({
       </View>
 
       {/* Seccion de Anotaciones */}
-      <View className="mt-4 border-t border-gray-100 pt-3">
-        <View className="flex-row items-center justify-between mb-2">
-          <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+      <View className="pt-3 mt-4 border-t border-gray-100">
+        <View className="flex-row justify-between items-center mb-2">
+          <Text className="text-xs font-bold tracking-wider text-gray-500 uppercase">
             Anotaciones
           </Text>
           <TouchableOpacity
@@ -171,7 +171,7 @@ export const ReservationCard = ({
               size={16}
               color="#3B82F6"
             />
-            <Text className="text-blue-500 text-xs font-medium ml-1">
+            <Text className="ml-1 text-xs font-medium text-blue-500">
               {isAddingNote ? 'Cancelar' : 'Agregar'}
             </Text>
           </TouchableOpacity>
@@ -180,7 +180,7 @@ export const ReservationCard = ({
         {isAddingNote && (
           <View className="flex-row items-center mb-3">
             <TextInput
-              className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm mr-2"
+              className="flex-1 px-3 py-2 mr-2 text-sm bg-gray-50 rounded-lg border border-gray-200"
               placeholder="Escribe una nota..."
               value={newAnnotation}
               onChangeText={setNewAnnotation}
@@ -188,7 +188,7 @@ export const ReservationCard = ({
             />
             <TouchableOpacity
               onPress={handleAddAnnotation}
-              className="bg-blue-500 p-2 rounded-lg"
+              className="p-2 bg-blue-500 rounded-lg"
               disabled={!newAnnotation.trim()}
             >
               <Ionicons name="arrow-up" size={16} color="white" />
@@ -201,9 +201,9 @@ export const ReservationCard = ({
             {reservation.anotaciones.map((nota) => (
               <View
                 key={nota.id}
-                className="bg-yellow-50 rounded-lg p-3 border border-yellow-100 flex-row justify-between items-start"
+                className="flex-row justify-between items-start p-3 bg-yellow-50 rounded-lg border border-yellow-100"
               >
-                <Text className="text-sm text-gray-700 flex-1 mr-2">
+                <Text className="flex-1 mr-2 text-sm text-gray-700">
                   {nota.content}
                 </Text>
                 {onDeleteAnnotation && (
@@ -219,7 +219,7 @@ export const ReservationCard = ({
           </View>
         ) : (
           !isAddingNote && (
-            <Text className="text-xs text-gray-400 italic">
+            <Text className="text-xs italic text-gray-400">
               No hay anotaciones
             </Text>
           )

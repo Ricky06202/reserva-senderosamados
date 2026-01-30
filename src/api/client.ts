@@ -6,33 +6,37 @@ const API_URL = 'https://api-reservas-senderosamados.rsanjur.com'
 export const apiClient = {
   getReservations: async (): Promise<Reservation[]> => {
     try {
+      console.log('Fetching reservations...')
       const response = await fetch(`${API_URL}/reservas`)
       if (!response.ok) throw new Error('Network response was not ok')
 
       const data: ApiReservation[] = await response.json()
 
-      return data.map((item) => ({
-        id: String(item.id),
-        name: item.nombre,
-        room: item.casa,
-        peopleCount: item.cantPersonas,
-        status: item.estado === 'pagado' ? 'pagado' : 'por cobrar',
-        totalPrice: parseFloat(item.total),
-        amountPaid: item.abono ? parseFloat(item.abono) : 0,
-        startDate: item.fechaInicio.split('T')[0],
-        endDate: item.fechaFin.split('T')[0],
-        roomId: item.casaId,
-        statusId: item.estadoId,
-        bookingCommission: item.comisionBooking
-          ? parseFloat(item.comisionBooking)
-          : 0,
-        bookingCommissionStatus:
-          (item.estadoComision as 'pagado' | 'pendiente') || 'pendiente',
-        anotaciones: item.anotaciones?.map((a) => ({
-          id: String(a.id),
-          content: a.contenido,
-        })),
-      }))
+      return data.map((item) => {
+        return {
+          id: String(item.id),
+          name: item.nombre,
+          room: item.casa,
+          peopleCount: item.cantPersonas,
+          status: item.estado === 'pagado' ? 'pagado' : 'por cobrar',
+          totalPrice: parseFloat(item.total),
+          amountPaid: item.abono ? parseFloat(item.abono) : 0,
+          startDate: item.fechaInicio.split('T')[0],
+          endDate: item.fechaFin.split('T')[0],
+          roomId: item.casaId,
+          statusId: item.estadoId,
+          bookingCommission: item.comisionBooking
+            ? parseFloat(item.comisionBooking)
+            : 0,
+          bookingCommissionStatus: (item.estadoComision as
+            | 'pagado'
+            | 'pendiente') || 'pendiente',
+          anotaciones: item.anotaciones?.map((a) => ({
+            id: String(a.id),
+            content: a.contenido,
+          })),
+        }
+      })
     } catch (error) {
       console.error('Error fetching reservations:', error)
       return []
@@ -68,17 +72,18 @@ export const apiClient = {
     }
   ): Promise<boolean> => {
     try {
+      console.log('Creating reservation:', reservation)
       const body = {
         nombre: reservation.name,
-        casaId: reservation.roomId, // Usamos el ID de la habitación
+        casaId: reservation.roomId,
         cantPersonas: Number(reservation.peopleCount),
-        estadoId: reservation.statusId, // Usamos el ID directamente
+        estadoId: reservation.statusId,
         total: String(reservation.totalPrice),
         abono: String(reservation.amountPaid || 0),
-        fechaInicio: new Date(reservation.startDate).toISOString(),
-        fechaFin: new Date(reservation.endDate).toISOString(),
         comisionBooking: String(reservation.bookingCommission || 0),
         estadoComision: reservation.bookingCommissionStatus || 'pendiente',
+        fechaInicio: new Date(reservation.startDate).toISOString(),
+        fechaFin: new Date(reservation.endDate).toISOString(),
       }
 
       const response = await fetch(`${API_URL}/reservas`, {
@@ -89,7 +94,14 @@ export const apiClient = {
         body: JSON.stringify(body),
       })
 
-      if (!response.ok) throw new Error('Error creating reservation')
+      if (!response.ok) {
+        console.error('Error creating reservation:', response.status)
+        throw new Error('Error creating reservation')
+      }
+
+      const newRes = await response.json()
+      console.log('Reservation created with ID:', newRes.id)
+
       return true
     } catch (error) {
       console.error('Error creating reservation:', error)
@@ -102,6 +114,7 @@ export const apiClient = {
     updates: Partial<Reservation> & { roomId?: number; statusId?: number }
   ): Promise<boolean> => {
     try {
+      console.log('Updating reservation:', id, updates)
       const body = {
         nombre: updates.name,
         casaId: updates.roomId,
@@ -114,17 +127,17 @@ export const apiClient = {
           updates.amountPaid !== undefined
             ? String(updates.amountPaid)
             : undefined,
+        comisionBooking:
+          updates.bookingCommission !== undefined
+            ? String(updates.bookingCommission)
+            : undefined,
+        estadoComision: updates.bookingCommissionStatus,
         fechaInicio: updates.startDate
           ? new Date(updates.startDate).toISOString()
           : undefined,
         fechaFin: updates.endDate
           ? new Date(updates.endDate).toISOString()
           : undefined,
-        comisionBooking:
-          updates.bookingCommission !== undefined
-            ? String(updates.bookingCommission)
-            : undefined,
-        estadoComision: updates.bookingCommissionStatus,
       }
 
       const response = await fetch(`${API_URL}/reservas/${id}`, {
@@ -135,7 +148,11 @@ export const apiClient = {
         body: JSON.stringify(body),
       })
 
-      if (!response.ok) throw new Error('Error updating reservation')
+      if (!response.ok) {
+        console.error('Error updating reservation:', response.status)
+        throw new Error('Error updating reservation')
+      }
+
       return true
     } catch (error) {
       console.error('Error updating reservation:', error)

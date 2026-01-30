@@ -317,15 +317,22 @@ export const HomeScreen = () => {
 
   const handleGenerateReport = async () => {
     setGeneratingReport(true)
+    // Cerramos el modal primero para evitar que aparezca en la captura/impresión en Web
+    setReportModalVisible(false)
+    
+    // Pequeña espera para que el modal se cierre completamente
+    await new Promise(resolve => setTimeout(resolve, 300))
+
     try {
       await generateBookingCommissionReport(
         reservations,
         reportStartDate,
         reportEndDate
       )
-      setReportModalVisible(false)
     } catch (error) {
       Alert.alert('Error', 'No se pudo generar el informe')
+      // Si falla, volvemos a mostrar el modal
+      setReportModalVisible(true)
     } finally {
       setGeneratingReport(false)
     }

@@ -3,6 +3,7 @@ import * as Sharing from 'expo-sharing'
 import { Reservation } from '../data/reservations'
 import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { Platform } from 'react-native'
 
 export const generateBookingCommissionReport = async (
   reservations: Reservation[],
@@ -16,31 +17,33 @@ export const generateBookingCommissionReport = async (
   let totalComisionesPorPagar = 0
   let totalHospedaje = 0
 
-  const rows = filteredReservations
-    .map((res) => {
-      const commission = res.bookingCommission || 0
-      const isPaid = res.bookingCommissionStatus === 'pagado'
-      
-      if (!isPaid) {
-        totalComisionesPorPagar += commission
-      }
-      totalHospedaje += res.totalPrice
+  const rows = filteredReservations.length > 0 
+    ? filteredReservations
+        .map((res) => {
+          const commission = res.bookingCommission || 0
+          const isPaid = res.bookingCommissionStatus === 'pagado'
+          
+          if (!isPaid) {
+            totalComisionesPorPagar += commission
+          }
+          totalHospedaje += res.totalPrice
 
-      return `
-      <tr>
-        <td>${res.room}</td>
-        <td>${format(parseISO(res.startDate), 'dd/MM/yyyy')} - ${format(parseISO(res.endDate), 'dd/MM/yyyy')}</td>
-        <td>${res.name}</td>
-        <td style="text-align: center;">${res.peopleCount}</td>
-        <td style="text-align: right;">$${res.totalPrice.toFixed(2)}</td>
-        <td style="text-align: right;">$${commission.toFixed(2)}</td>
-        <td style="text-align: center; color: ${isPaid ? 'green' : 'red'};">
-          ${isPaid ? 'Pagado' : 'Pendiente'}
-        </td>
-      </tr>
-    `
-    })
-    .join('')
+          return `
+          <tr>
+            <td>${res.room}</td>
+            <td>${format(parseISO(res.startDate), 'dd/MM/yyyy')} - ${format(parseISO(res.endDate), 'dd/MM/yyyy')}</td>
+            <td>${res.name}</td>
+            <td style="text-align: center;">${res.peopleCount}</td>
+            <td style="text-align: right;">$${res.totalPrice.toFixed(2)}</td>
+            <td style="text-align: right;">$${commission.toFixed(2)}</td>
+            <td style="text-align: center; color: ${isPaid ? 'green' : 'red'};">
+              ${isPaid ? 'Pagado' : 'Pendiente'}
+            </td>
+          </tr>
+        `
+        })
+        .join('')
+    : '<tr><td colspan="7" style="text-align: center; padding: 20px; color: #6B7280;">No hay reservas registradas en este periodo.</td></tr>'
 
   const html = `
     <html>
@@ -101,8 +104,27 @@ export const generateBookingCommissionReport = async (
   `
 
   try {
-    const { uri } = await Print.printToFileAsync({ html })
-    await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' })
+    if (Platform.OS === 'web') {
+      // En Web, a veces expo-print imprime la pantalla actual en lugar del HTML.
+      // Usar una ventana nueva es más confiable para imprimir solo el reporte.
+      const printWindow = window.open('', '_blank')
+      if (printWindow) {
+        printWindow.document.write(html)
+        printWindow.document.close()
+        // Esperar un momento para que los estilos se apliquen
+        setTimeout(() => {
+          printWindow.print()
+          // Opcionalmente cerrar la ventana después de imprimir
+          // printWindow.close();
+        }, 500)
+      } else {
+        // Fallback a expo-print si el popup está bloqueado
+        await Print.printAsync({ html })
+      }
+    } else {
+      const { uri } = await Print.printToFileAsync({ html })
+      await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' })
+    }
   } catch (error) {
     console.error('Error generating PDF:', error)
     throw error

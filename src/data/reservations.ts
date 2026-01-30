@@ -11,6 +11,7 @@ export interface Reservation {
   peopleCount: number
   room: string
   totalPrice: number
+  amountPaid?: number
   status: 'pagado' | 'por cobrar'
   bookingCommission?: number
   bookingCommissionStatus?: 'pagado' | 'pendiente'

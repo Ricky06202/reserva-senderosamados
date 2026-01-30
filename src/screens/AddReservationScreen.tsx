@@ -27,6 +27,7 @@ export const AddReservationScreen = () => {
     startDate: new Date().toISOString().split('T')[0],
     endDate: new Date(Date.now() + 86400000).toISOString().split('T')[0], // Mañana
     totalPrice: '',
+    amountPaid: '',
     isPaid: false,
     bookingCommission: '',
     isCommissionPaid: false,
@@ -79,6 +80,7 @@ export const AddReservationScreen = () => {
       startDate: formData.startDate,
       endDate: formData.endDate,
       totalPrice: Number(formData.totalPrice),
+      amountPaid: Number(formData.amountPaid || 0),
       status: formData.isPaid ? 'pagado' : 'por cobrar', // Mantener compatibilidad de tipos
       statusId: formData.isPaid ? 2 : 1, // ID: 2 (pagado), 1 (por cobrar)
       bookingCommission: Number(formData.bookingCommission || 0),
@@ -95,6 +97,7 @@ export const AddReservationScreen = () => {
         startDate: new Date().toISOString().split('T')[0],
         endDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
         totalPrice: '',
+        amountPaid: '',
         isPaid: false,
         bookingCommission: '',
         isCommissionPaid: false,
@@ -281,6 +284,32 @@ export const AddReservationScreen = () => {
               value={formData.totalPrice}
               onChangeText={(text) => updateField('totalPrice', text)}
             />
+          </View>
+        </View>
+
+        {/* Pago y Saldo (Fila) */}
+        <View className="flex-row justify-between mb-4">
+          <View className="w-[48%]">
+            <Text className="text-gray-700 font-semibold mb-2">
+              Monto Pagado (Abono)
+            </Text>
+            <TextInput
+              className="bg-white border border-gray-300 rounded-lg p-3 text-gray-800"
+              placeholder="0.00"
+              keyboardType="numeric"
+              value={formData.amountPaid}
+              onChangeText={(text) => updateField('amountPaid', text)}
+            />
+          </View>
+          <View className="w-[48%]">
+            <Text className="text-gray-700 font-semibold mb-2">
+              Saldo Pendiente
+            </Text>
+            <View className="bg-gray-100 border border-gray-200 rounded-lg p-3 h-[50px] justify-center">
+              <Text className="text-gray-800 font-bold">
+                $ {(Number(formData.totalPrice || 0) - Number(formData.amountPaid || 0)).toFixed(2)}
+              </Text>
+            </View>
           </View>
         </View>
 

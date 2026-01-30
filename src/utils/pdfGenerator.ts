@@ -16,17 +16,23 @@ export const generateBookingCommissionReport = async (
 
   let totalComisionesPorPagar = 0
   let totalHospedaje = 0
+  let totalAbonado = 0
+  let totalPendiente = 0
 
   const rows = filteredReservations.length > 0 
     ? filteredReservations
         .map((res) => {
           const commission = res.bookingCommission || 0
           const isPaid = res.bookingCommissionStatus === 'pagado'
+          const abono = res.amountPaid || 0
+          const pendiente = res.totalPrice - abono
           
           if (!isPaid) {
             totalComisionesPorPagar += commission
           }
           totalHospedaje += res.totalPrice
+          totalAbonado += abono
+          totalPendiente += pendiente
 
           return `
           <tr>
@@ -35,6 +41,10 @@ export const generateBookingCommissionReport = async (
             <td>${res.name}</td>
             <td style="text-align: center;">${res.peopleCount}</td>
             <td style="text-align: right;">$${res.totalPrice.toFixed(2)}</td>
+            <td style="text-align: right;">$${abono.toFixed(2)}</td>
+            <td style="text-align: right; color: ${pendiente > 0 ? 'red' : 'black'}; font-weight: ${pendiente > 0 ? 'bold' : 'normal'};">
+              $${pendiente.toFixed(2)}
+            </td>
             <td style="text-align: right;">$${commission.toFixed(2)}</td>
             <td style="text-align: center; color: ${isPaid ? 'green' : 'red'};">
               ${isPaid ? 'Pagado' : 'Pendiente'}
@@ -43,7 +53,7 @@ export const generateBookingCommissionReport = async (
         `
         })
         .join('')
-    : '<tr><td colspan="7" style="text-align: center; padding: 20px; color: #6B7280;">No hay reservas registradas en este periodo.</td></tr>'
+    : '<tr><td colspan="9" style="text-align: center; padding: 20px; color: #6B7280;">No hay reservas registradas en este periodo.</td></tr>'
 
   const html = `
     <html>
@@ -76,8 +86,10 @@ export const generateBookingCommissionReport = async (
               <th>Nombre</th>
               <th>Pax</th>
               <th>Total</th>
+              <th>Abono</th>
+              <th>Pendiente</th>
               <th>Comisión</th>
-              <th>Estado</th>
+              <th>Estado Com.</th>
             </tr>
           </thead>
           <tbody>
@@ -87,12 +99,20 @@ export const generateBookingCommissionReport = async (
 
         <div class="totals-container">
           <div class="total-row">
-            <span class="total-label">Total Comisiones por Pagar:</span>
-            <span class="total-value">$${totalComisionesPorPagar.toFixed(2)}</span>
-          </div>
-          <div class="total-row">
             <span class="total-label">Total Hospedaje:</span>
             <span class="total-value">$${totalHospedaje.toFixed(2)}</span>
+          </div>
+          <div class="total-row">
+            <span class="total-label">Total Abonado:</span>
+            <span class="total-value">$${totalAbonado.toFixed(2)}</span>
+          </div>
+          <div class="total-row">
+            <span class="total-label" style="color: #DC2626;">Total Saldo Pendiente:</span>
+            <span class="total-value" style="color: #DC2626;">$${totalPendiente.toFixed(2)}</span>
+          </div>
+          <div class="total-row" style="margin-top: 10px; border-top: 1px dashed #1E3A8A; padding-top: 10px;">
+            <span class="total-label">Comisiones Booking por Pagar:</span>
+            <span class="total-value">$${totalComisionesPorPagar.toFixed(2)}</span>
           </div>
         </div>
 

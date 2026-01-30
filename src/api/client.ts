@@ -18,6 +18,7 @@ export const apiClient = {
         peopleCount: item.cantPersonas,
         status: item.estado === 'pagado' ? 'pagado' : 'por cobrar',
         totalPrice: parseFloat(item.total),
+        amountPaid: item.abono ? parseFloat(item.abono) : 0,
         startDate: item.fechaInicio.split('T')[0],
         endDate: item.fechaFin.split('T')[0],
         roomId: item.casaId,
@@ -73,6 +74,7 @@ export const apiClient = {
         cantPersonas: Number(reservation.peopleCount),
         estadoId: reservation.statusId, // Usamos el ID directamente
         total: String(reservation.totalPrice),
+        abono: String(reservation.amountPaid || 0),
         fechaInicio: new Date(reservation.startDate).toISOString(),
         fechaFin: new Date(reservation.endDate).toISOString(),
         comisionBooking: String(reservation.bookingCommission || 0),
@@ -108,6 +110,10 @@ export const apiClient = {
           : undefined,
         estadoId: updates.statusId,
         total: updates.totalPrice ? String(updates.totalPrice) : undefined,
+        abono:
+          updates.amountPaid !== undefined
+            ? String(updates.amountPaid)
+            : undefined,
         fechaInicio: updates.startDate
           ? new Date(updates.startDate).toISOString()
           : undefined,

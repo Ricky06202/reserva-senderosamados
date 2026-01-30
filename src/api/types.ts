@@ -12,6 +12,7 @@ export interface ApiReservation {
   cantPersonas: number
   estado: string
   total: string
+  abono?: string
   fechaInicio: string
   fechaFin: string
   casaId: number

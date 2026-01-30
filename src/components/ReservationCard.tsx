@@ -81,11 +81,29 @@ export const ReservationCard = ({
               <Text className="text-xs font-medium">🏠 {reservation.room}</Text>
             </View>
           </View>
-          <View className="flex-row items-center justify-between mt-1">
-            <View className="flex-row items-center">
-              <Text className="text-sm font-bold text-gray-900 mr-2">
-                Total: ${reservation.totalPrice.toFixed(2)}
+          <View className="mt-2 border-t border-gray-100 pt-2">
+            <View className="flex-row justify-between items-center mb-1">
+              <Text className="text-xs text-gray-500">Total Hospedaje:</Text>
+              <Text className="text-sm font-bold text-gray-900">
+                ${reservation.totalPrice.toFixed(2)}
               </Text>
+            </View>
+            <View className="flex-row justify-between items-center mb-1">
+              <Text className="text-xs text-gray-500">Abonado:</Text>
+              <Text className="text-sm font-bold text-green-600">
+                ${(reservation.amountPaid || 0).toFixed(2)}
+              </Text>
+            </View>
+            <View className="flex-row justify-between items-center">
+              <Text className="text-xs text-gray-500">Saldo Pendiente:</Text>
+              <Text className="text-sm font-bold text-red-600">
+                ${(reservation.totalPrice - (reservation.amountPaid || 0)).toFixed(2)}
+              </Text>
+            </View>
+          </View>
+
+          <View className="flex-row items-center justify-between mt-3">
+            <View className="flex-row items-center">
               {reservation.bookingCommission !== undefined &&
                 reservation.bookingCommission > 0 && (
                   <View
@@ -102,7 +120,7 @@ export const ReservationCard = ({
                           : 'text-red-700'
                       }`}
                     >
-                      BK: ${reservation.bookingCommission.toFixed(2)}
+                      Comisión BK: ${reservation.bookingCommission.toFixed(2)}
                     </Text>
                   </View>
                 )}

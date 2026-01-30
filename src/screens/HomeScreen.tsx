@@ -157,6 +157,7 @@ export const HomeScreen = () => {
     peopleCount: string
     statusId: number
     totalPrice: string
+    amountPaid: string
     startDate: string
     endDate: string
     bookingCommission: string
@@ -167,6 +168,7 @@ export const HomeScreen = () => {
     peopleCount: '',
     statusId: 0,
     totalPrice: '',
+    amountPaid: '',
     startDate: '',
     endDate: '',
     bookingCommission: '',
@@ -371,6 +373,7 @@ export const HomeScreen = () => {
       peopleCount: String(reservation.peopleCount),
       statusId: reservation.statusId || 0,
       totalPrice: String(reservation.totalPrice),
+      amountPaid: (reservation.amountPaid || 0).toString(),
       startDate: reservation.startDate,
       endDate: reservation.endDate,
       bookingCommission: (reservation.bookingCommission || 0).toString(),
@@ -389,6 +392,7 @@ export const HomeScreen = () => {
       peopleCount: Number(editForm.peopleCount),
       statusId: editForm.statusId,
       totalPrice: parseFloat(editForm.totalPrice),
+      amountPaid: parseFloat(editForm.amountPaid || '0'),
       startDate: editForm.startDate,
       endDate: editForm.endDate,
       bookingCommission: parseFloat(editForm.bookingCommission || '0'),
@@ -765,20 +769,48 @@ export const HomeScreen = () => {
                 </View>
               </View>
 
-              {/* Total */}
+              {/* Total y Abono */}
+              <View className="flex-row gap-4 mb-4">
+                <View className="flex-1">
+                  <Text className="text-sm font-semibold text-gray-700 mb-2">
+                    Total ($)
+                  </Text>
+                  <TextInput
+                    className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-gray-800 font-semibold"
+                    value={editForm.totalPrice}
+                    keyboardType="numeric"
+                    onChangeText={(text) =>
+                      setEditForm({ ...editForm, totalPrice: text })
+                    }
+                    placeholder="0.00"
+                  />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-sm font-semibold text-gray-700 mb-2">
+                    Abono ($)
+                  </Text>
+                  <TextInput
+                    className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-gray-800 font-semibold"
+                    value={editForm.amountPaid}
+                    keyboardType="numeric"
+                    onChangeText={(text) =>
+                      setEditForm({ ...editForm, amountPaid: text })
+                    }
+                    placeholder="0.00"
+                  />
+                </View>
+              </View>
+
+              {/* Saldo Pendiente */}
               <View className="mb-8">
                 <Text className="text-sm font-semibold text-gray-700 mb-2">
-                  Total ($)
+                  Saldo Pendiente
                 </Text>
-                <TextInput
-                  className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-gray-800 text-lg font-semibold"
-                  value={editForm.totalPrice}
-                  keyboardType="numeric"
-                  onChangeText={(text) =>
-                    setEditForm({ ...editForm, totalPrice: text })
-                  }
-                  placeholder="0.00"
-                />
+                <View className="bg-gray-100 border border-gray-200 rounded-xl p-4">
+                  <Text className="text-gray-800 text-lg font-bold">
+                    $ {(parseFloat(editForm.totalPrice || '0') - parseFloat(editForm.amountPaid || '0')).toFixed(2)}
+                  </Text>
+                </View>
               </View>
 
               {/* Comisión Booking */}

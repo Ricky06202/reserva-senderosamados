@@ -18,9 +18,10 @@ import { ReservationCard } from '../components/ReservationCard'
 import { apiClient } from '../api/client'
 import { ApiRoom, ApiStatus } from '../api/types'
 import { Reservation } from '../data/reservations'
-import { format, parseISO, eachDayOfInterval } from 'date-fns'
+import { format, parseISO, eachDayOfInterval, startOfMonth, endOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useFocusEffect } from '@react-navigation/native'
+import { generateBookingCommissionReport } from '../utils/pdfGenerator'
 
 // Configurar idioma del calendario
 LocaleConfig.locales['es'] = {
@@ -134,6 +135,16 @@ export const HomeScreen = () => {
     null
   )
 
+  // Report State
+  const [reportModalVisible, setReportModalVisible] = useState(false)
+  const [reportStartDate, setReportStartDate] = useState(
+    format(startOfMonth(new Date()), 'yyyy-MM-dd')
+  )
+  const [reportEndDate, setReportEndDate] = useState(
+    format(endOfMonth(new Date()), 'yyyy-MM-dd')
+  )
+  const [generatingReport, setGeneratingReport] = useState(false)
+
   // Edit State
   const [editModalVisible, setEditModalVisible] = useState(false)
   const [editingReservation, setEditingReservation] =
@@ -148,6 +159,8 @@ export const HomeScreen = () => {
     totalPrice: string
     startDate: string
     endDate: string
+    bookingCommission: string
+    bookingCommissionStatus: 'pagado' | 'pendiente'
   }>({
     name: '',
     roomId: 0,
@@ -156,6 +169,8 @@ export const HomeScreen = () => {
     totalPrice: '',
     startDate: '',
     endDate: '',
+    bookingCommission: '',
+    bookingCommissionStatus: 'pendiente',
   })
 
   const getRoomSelectionColor = (id: number, name: string) => {
@@ -300,6 +315,22 @@ export const HomeScreen = () => {
       .slice(0, 3)
   }, [reservations])
 
+  const handleGenerateReport = async () => {
+    setGeneratingReport(true)
+    try {
+      await generateBookingCommissionReport(
+        reservations,
+        reportStartDate,
+        reportEndDate
+      )
+      setReportModalVisible(false)
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo generar el informe')
+    } finally {
+      setGeneratingReport(false)
+    }
+  }
+
   const handleDelete = useCallback((id: string) => {
     console.log('--- Abriendo modal para eliminar:', id)
     setReservationToDelete(id)
@@ -335,6 +366,8 @@ export const HomeScreen = () => {
       totalPrice: String(reservation.totalPrice),
       startDate: reservation.startDate,
       endDate: reservation.endDate,
+      bookingCommission: (reservation.bookingCommission || 0).toString(),
+      bookingCommissionStatus: reservation.bookingCommissionStatus || 'pendiente',
     })
     setEditModalVisible(true)
   }
@@ -348,9 +381,11 @@ export const HomeScreen = () => {
       roomId: editForm.roomId,
       peopleCount: Number(editForm.peopleCount),
       statusId: editForm.statusId,
-      totalPrice: Number(editForm.totalPrice),
+      totalPrice: parseFloat(editForm.totalPrice),
       startDate: editForm.startDate,
       endDate: editForm.endDate,
+      bookingCommission: parseFloat(editForm.bookingCommission || '0'),
+      bookingCommissionStatus: editForm.bookingCommissionStatus,
     })
     setLoading(false)
 
@@ -445,11 +480,19 @@ export const HomeScreen = () => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        <View className="px-5 py-4">
-          <Text className="text-2xl font-bold text-gray-900">
-            Senderos Amados
-          </Text>
-          <Text className="text-gray-500">Gestión de Reservas</Text>
+        <View className="px-5 py-4 flex-row justify-between items-center">
+          <View>
+            <Text className="text-2xl font-bold text-gray-900">
+              Senderos Amados
+            </Text>
+            <Text className="text-gray-500">Gestión de Reservas</Text>
+          </View>
+          <TouchableOpacity
+            onPress={() => setReportModalVisible(true)}
+            className="bg-blue-100 p-3 rounded-full active:bg-blue-200"
+          >
+            <Ionicons name="document-text" size={24} color="#3B82F6" />
+          </TouchableOpacity>
         </View>
 
         {/* Calendar */}
@@ -731,6 +774,61 @@ export const HomeScreen = () => {
                 />
               </View>
 
+              {/* Comisión Booking */}
+              <View className="mb-4">
+                <Text className="text-sm font-semibold text-gray-700 mb-2">
+                  Comisión Booking ($)
+                </Text>
+                <TextInput
+                  className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-gray-800"
+                  value={editForm.bookingCommission}
+                  keyboardType="numeric"
+                  onChangeText={(text) =>
+                    setEditForm({ ...editForm, bookingCommission: text })
+                  }
+                  placeholder="0.00"
+                />
+              </View>
+
+              {/* Estado Comisión */}
+              <View className="mb-8">
+                <Text className="text-sm font-semibold text-gray-700 mb-2">
+                  Estado Comisión
+                </Text>
+                <View className="flex-row gap-3">
+                  {['pendiente', 'pagado'].map((status) => (
+                    <TouchableOpacity
+                      key={status}
+                      onPress={() =>
+                        setEditForm({
+                          ...editForm,
+                          bookingCommissionStatus: status as
+                            | 'pendiente'
+                            | 'pagado',
+                        })
+                      }
+                      className={`flex-1 py-3 rounded-xl border items-center ${
+                        editForm.bookingCommissionStatus === status
+                          ? status === 'pagado'
+                            ? 'bg-green-500 border-green-500'
+                            : 'bg-yellow-500 border-yellow-500'
+                          : 'bg-white border-gray-200'
+                      }`}
+                    >
+                      <Text
+                        className={`font-semibold capitalize ${
+                          editForm.bookingCommissionStatus === status
+                            ? 'text-white'
+                            : 'text-gray-700'
+                        }`}
+                      >
+                        {status}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
               <TouchableOpacity
                 onPress={handleUpdate}
                 className="bg-blue-500 py-4 rounded-xl items-center shadow-md shadow-blue-200 mb-8"
@@ -740,6 +838,74 @@ export const HomeScreen = () => {
                 </Text>
               </TouchableOpacity>
             </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Report Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={reportModalVisible}
+        onRequestClose={() => setReportModalVisible(false)}
+      >
+        <View className="flex-1 bg-black/60 justify-center items-center px-6">
+          <View className="bg-white rounded-2xl w-full p-6 shadow-xl">
+            <View className="flex-row justify-between items-center mb-6">
+              <Text className="text-xl font-bold text-gray-900">
+                Generar Informe PDF
+              </Text>
+              <TouchableOpacity
+                onPress={() => setReportModalVisible(false)}
+                className="bg-gray-100 p-2 rounded-full"
+              >
+                <Ionicons name="close" size={20} color="#374151" />
+              </TouchableOpacity>
+            </View>
+
+            <Text className="text-gray-600 mb-4">
+              Seleccione el periodo para el informe de comisiones Booking.
+            </Text>
+
+            <View className="mb-4">
+              <Text className="text-sm font-semibold text-gray-700 mb-2">
+                Fecha Inicio (YYYY-MM-DD)
+              </Text>
+              <TextInput
+                className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-gray-800"
+                value={reportStartDate}
+                onChangeText={setReportStartDate}
+                placeholder="2026-01-01"
+              />
+            </View>
+
+            <View className="mb-8">
+              <Text className="text-sm font-semibold text-gray-700 mb-2">
+                Fecha Fin (YYYY-MM-DD)
+              </Text>
+              <TextInput
+                className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-gray-800"
+                value={reportEndDate}
+                onChangeText={setReportEndDate}
+                placeholder="2026-01-31"
+              />
+            </View>
+
+            <TouchableOpacity
+              onPress={handleGenerateReport}
+              disabled={generatingReport}
+              className={`bg-blue-600 py-4 rounded-xl items-center shadow-md ${
+                generatingReport ? 'opacity-50' : ''
+              }`}
+            >
+              {generatingReport ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text className="text-white font-bold text-lg">
+                  Generar Informe
+                </Text>
+              )}
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>

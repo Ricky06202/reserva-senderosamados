@@ -22,6 +22,11 @@ export const apiClient = {
         endDate: item.fechaFin.split('T')[0],
         roomId: item.casaId,
         statusId: item.estadoId,
+        bookingCommission: item.comisionBooking
+          ? parseFloat(item.comisionBooking)
+          : 0,
+        bookingCommissionStatus:
+          (item.estadoComision as 'pagado' | 'pendiente') || 'pendiente',
         anotaciones: item.anotaciones?.map((a) => ({
           id: String(a.id),
           content: a.contenido,
@@ -70,6 +75,8 @@ export const apiClient = {
         total: String(reservation.totalPrice),
         fechaInicio: new Date(reservation.startDate).toISOString(),
         fechaFin: new Date(reservation.endDate).toISOString(),
+        comisionBooking: String(reservation.bookingCommission || 0),
+        estadoComision: reservation.bookingCommissionStatus || 'pendiente',
       }
 
       const response = await fetch(`${API_URL}/reservas`, {
@@ -107,6 +114,11 @@ export const apiClient = {
         fechaFin: updates.endDate
           ? new Date(updates.endDate).toISOString()
           : undefined,
+        comisionBooking:
+          updates.bookingCommission !== undefined
+            ? String(updates.bookingCommission)
+            : undefined,
+        estadoComision: updates.bookingCommissionStatus,
       }
 
       const response = await fetch(`${API_URL}/reservas/${id}`, {

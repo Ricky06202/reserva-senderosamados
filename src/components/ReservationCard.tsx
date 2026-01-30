@@ -82,9 +82,31 @@ export const ReservationCard = ({
             </View>
           </View>
           <View className="flex-row items-center justify-between mt-1">
-            <Text className="text-sm font-bold text-gray-900">
-              Total: ${reservation.totalPrice.toFixed(2)}
-            </Text>
+            <View className="flex-row items-center">
+              <Text className="text-sm font-bold text-gray-900 mr-2">
+                Total: ${reservation.totalPrice.toFixed(2)}
+              </Text>
+              {reservation.bookingCommission !== undefined &&
+                reservation.bookingCommission > 0 && (
+                  <View
+                    className={`rounded-md px-1.5 py-0.5 ${
+                      reservation.bookingCommissionStatus === 'pagado'
+                        ? 'bg-green-50 border border-green-100'
+                        : 'bg-red-50 border border-red-100'
+                    }`}
+                  >
+                    <Text
+                      className={`text-[10px] font-bold ${
+                        reservation.bookingCommissionStatus === 'pagado'
+                          ? 'text-green-700'
+                          : 'text-red-700'
+                      }`}
+                    >
+                      BK: ${reservation.bookingCommission.toFixed(2)}
+                    </Text>
+                  </View>
+                )}
+            </View>
             <View className={`rounded-full px-3 py-1 ${statusColor}`}>
               <Text className="text-xs font-medium capitalize">
                 {reservation.status}

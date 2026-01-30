@@ -28,6 +28,8 @@ export const AddReservationScreen = () => {
     endDate: new Date(Date.now() + 86400000).toISOString().split('T')[0], // Mañana
     totalPrice: '',
     isPaid: false,
+    bookingCommission: '',
+    isCommissionPaid: false,
   })
 
   const [rooms, setRooms] = useState<ApiRoom[]>([])
@@ -79,6 +81,8 @@ export const AddReservationScreen = () => {
       totalPrice: Number(formData.totalPrice),
       status: formData.isPaid ? 'pagado' : 'por cobrar', // Mantener compatibilidad de tipos
       statusId: formData.isPaid ? 2 : 1, // ID: 2 (pagado), 1 (por cobrar)
+      bookingCommission: Number(formData.bookingCommission || 0),
+      bookingCommissionStatus: formData.isCommissionPaid ? 'pagado' : 'pendiente',
     })
     setSaving(false)
 
@@ -92,6 +96,8 @@ export const AddReservationScreen = () => {
         endDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
         totalPrice: '',
         isPaid: false,
+        bookingCommission: '',
+        isCommissionPaid: false,
       })
       setTempStartDate('')
       setTempEndDate('')
@@ -275,6 +281,45 @@ export const AddReservationScreen = () => {
               value={formData.totalPrice}
               onChangeText={(text) => updateField('totalPrice', text)}
             />
+          </View>
+        </View>
+
+        {/* Comisión Booking */}
+        <View className="flex-row justify-between mb-4">
+          <View className="w-[48%]">
+            <Text className="text-gray-700 font-semibold mb-2">
+              Comisión Booking ($)
+            </Text>
+            <TextInput
+              className="bg-white border border-gray-300 rounded-lg p-3 text-gray-800"
+              placeholder="0.00"
+              keyboardType="numeric"
+              value={formData.bookingCommission}
+              onChangeText={(text) => updateField('bookingCommission', text)}
+            />
+          </View>
+          <View className="w-[48%]">
+            <Text className="text-gray-700 font-semibold mb-2">
+              Estado Comisión
+            </Text>
+            <TouchableOpacity
+              onPress={() =>
+                updateField('isCommissionPaid', !formData.isCommissionPaid)
+              }
+              className={`flex-1 rounded-lg border p-3 items-center justify-center ${
+                formData.isCommissionPaid
+                  ? 'bg-green-500 border-green-500'
+                  : 'bg-white border-gray-300'
+              }`}
+            >
+              <Text
+                className={`font-semibold ${
+                  formData.isCommissionPaid ? 'text-white' : 'text-gray-700'
+                }`}
+              >
+                {formData.isCommissionPaid ? 'PAGADO' : 'PENDIENTE'}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
 

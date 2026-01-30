@@ -16,6 +16,8 @@ export interface ApiReservation {
   fechaFin: string
   casaId: number
   estadoId: number
+  comisionBooking?: string
+  estadoComision?: string
   anotaciones?: ApiAnnotation[]
 }
 

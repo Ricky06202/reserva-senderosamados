@@ -12,6 +12,8 @@ export interface Reservation {
   room: string
   totalPrice: number
   status: 'pagado' | 'por cobrar'
+  bookingCommission?: number
+  bookingCommissionStatus?: 'pagado' | 'pendiente'
   roomId?: number
   statusId?: number
   anotaciones?: Annotation[]

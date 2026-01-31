@@ -10,6 +10,7 @@ import {
   Modal,
   TextInput,
   Platform,
+  useWindowDimensions,
 } from 'react-native'
 import { Calendar, DateData, LocaleConfig } from 'react-native-calendars'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -76,13 +77,13 @@ interface DayMarking {
   color: string
 }
 
-const DayComponent = ({ date, state, marking, onPress }: any) => {
+const DayComponent = ({ date, state, marking, onPress, isLargeScreen }: any) => {
   const dayReservations: DayMarking[] = marking?.customMarks || []
 
   return (
     <TouchableOpacity
       onPress={() => onPress(date)}
-      className="h-32 w-full items-center justify-start pt-1 overflow-visible z-10"
+      className={`${isLargeScreen ? 'h-32' : 'h-16'} w-full items-center justify-start pt-1 overflow-visible z-10`}
     >
       <Text
         className={`text-xs mb-0.5 ${state === 'disabled' ? 'text-gray-300' : 'text-gray-900'} z-30`}
@@ -95,7 +96,9 @@ const DayComponent = ({ date, state, marking, onPress }: any) => {
 
         let barStyle = 'h-5 justify-center absolute'
         let textStyle = 'text-[9px] text-white font-bold ml-1 leading-tight'
-        const topPosition = 20 + rowIndex * 22
+        const topPosition = (isLargeScreen ? 20 : 18) + rowIndex * (isLargeScreen ? 22 : 12)
+
+        if (!isLargeScreen && rowIndex > 1) return null // Limit rows on mobile calendar
 
         if (status === 'start') barStyle += ' ml-1 rounded-l-md w-[130%] z-20'
         else if (status === 'middle') barStyle += ' w-[140%] -ml-[20%] z-10'
@@ -103,13 +106,16 @@ const DayComponent = ({ date, state, marking, onPress }: any) => {
           barStyle += ' mr-1 rounded-r-md w-[130%] -ml-[30%] z-20'
         else if (status === 'single') barStyle += ' mx-1 rounded-md z-20'
 
+        // On mobile, bars should be thinner
+        if (!isLargeScreen) barStyle = barStyle.replace('h-5', 'h-2')
+
         return (
           <View
             key={`res-${reservation.id}-${date.dateString}`}
             className={`${barStyle} ${color}`}
             style={{ top: topPosition }}
           >
-            {(status === 'start' || status === 'single') && (
+            {isLargeScreen && (status === 'start' || status === 'single') && (
               <View>
                 <Text className={textStyle} numberOfLines={1}>
                   {reservation.name}
@@ -473,7 +479,8 @@ export const HomeScreen = () => {
     }
   }
 
-  const isWeb = Platform.OS === 'web'
+  const { width } = useWindowDimensions()
+  const isLargeScreen = width > 768
 
   if (loading && !refreshing) {
     return (
@@ -503,7 +510,7 @@ export const HomeScreen = () => {
           </TouchableOpacity>
         </View>
 
-        {isWeb ? (
+        {isLargeScreen ? (
           <View className="flex-1 flex-row">
             {/* Left Column: Calendar */}
             <View className="w-[45%] border-r border-gray-200 bg-white">
@@ -517,6 +524,16 @@ export const HomeScreen = () => {
                         state={state}
                         marking={marking}
                         onPress={(d: DateData) => setSelectedDate(d.dateString)}
+                        isLargeScreen={isLargeScreen}
+                      />
+                    )}
+                    renderArrow={(direction: string) => (
+                      <Ionicons
+                        name={
+                          direction === 'left' ? 'chevron-back' : 'chevron-forward'
+                        }
+                        size={24}
+                        color="#3B82F6"
                       />
                     )}
                     theme={{
@@ -634,6 +651,16 @@ export const HomeScreen = () => {
                     state={state}
                     marking={marking}
                     onPress={(d: DateData) => setSelectedDate(d.dateString)}
+                    isLargeScreen={isLargeScreen}
+                  />
+                )}
+                renderArrow={(direction: string) => (
+                  <Ionicons
+                    name={
+                      direction === 'left' ? 'chevron-back' : 'chevron-forward'
+                    }
+                    size={24}
+                    color="#3B82F6"
                   />
                 )}
                 theme={{
@@ -743,15 +770,14 @@ export const HomeScreen = () => {
         </View>
       </Modal>
 
-      {/* Edit Reservation Modal */}
       <Modal
         animationType="slide"
         transparent={true}
         visible={editModalVisible}
         onRequestClose={() => setEditModalVisible(false)}
       >
-        <View className={`flex-1 bg-black/60 ${isWeb ? 'justify-center items-center p-4' : 'justify-end'}`}>
-          <View className={`bg-white p-6 ${isWeb ? 'rounded-3xl w-full max-w-2xl h-[90%]' : 'rounded-t-3xl h-[85%]'}`}>
+        <View className={`flex-1 bg-black/60 ${isLargeScreen ? 'justify-center items-center p-4' : 'justify-end'}`}>
+          <View className={`bg-white p-6 ${isLargeScreen ? 'rounded-3xl w-full max-w-2xl h-[90%]' : 'rounded-t-3xl h-[85%]'}`}>
             <View className="flex-row justify-between items-center mb-6">
               <Text className="text-2xl font-bold text-gray-900">
                 Editar Reserva

@@ -8,6 +8,7 @@ import {
   Switch,
   Alert,
   Platform,
+  useWindowDimensions,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -40,7 +41,8 @@ export const AddReservationScreen = () => {
   const [tempEndDate, setTempEndDate] = useState('')
   const [saving, setSaving] = useState(false)
 
-  const isWeb = Platform.OS === 'web'
+  const { width } = useWindowDimensions()
+  const isLargeScreen = width > 768
 
   useEffect(() => {
     const fetchRooms = async () => {
@@ -211,10 +213,10 @@ export const AddReservationScreen = () => {
         </View>
 
         <ScrollView className="flex-1">
-          <View className={`p-6 ${isWeb ? 'flex-row flex-wrap justify-center' : ''}`}>
-            <View className={isWeb ? 'w-full max-w-4xl flex-row flex-wrap' : ''}>
+          <View className={`p-6 ${isLargeScreen ? 'flex-row flex-wrap justify-center' : ''}`}>
+            <View className={isLargeScreen ? 'w-full max-w-4xl flex-row flex-wrap' : ''}>
               {/* Columna Izquierda (Web) / Arriba (Mobile) */}
-              <View className={isWeb ? 'w-1/2 pr-4' : 'w-full'}>
+              <View className={isLargeScreen ? 'w-1/2 pr-4' : 'w-full'}>
                 {/* Nombre del Cliente */}
                 <View className="mb-4">
                   <Text className="text-gray-700 font-semibold mb-2">
@@ -303,7 +305,7 @@ export const AddReservationScreen = () => {
               </View>
 
               {/* Columna Derecha (Web) / Abajo (Mobile) */}
-              <View className={isWeb ? 'w-1/2 pl-4' : 'w-full'}>
+              <View className={isLargeScreen ? 'w-1/2 pl-4' : 'w-full'}>
                 {/* Personas y Precio (Fila) */}
                 <View className="flex-row justify-between mb-4">
                   <View className="w-[48%]">
@@ -432,11 +434,11 @@ export const AddReservationScreen = () => {
               </View>
 
               {/* Botón Guardar - Centrado en Web */}
-              <View className={`w-full ${isWeb ? 'items-center mt-4' : ''}`}>
+              <View className={`w-full ${isLargeScreen ? 'items-center mt-4' : ''}`}>
                 <TouchableOpacity
                   onPress={handleSave}
                   disabled={saving}
-                  className={`bg-blue-600 rounded-xl py-4 items-center shadow-md ${isWeb ? 'w-full max-w-md' : 'w-full'} ${saving ? 'opacity-50' : 'active:bg-blue-700'}`}
+                  className={`bg-blue-600 rounded-xl py-4 items-center shadow-md ${isLargeScreen ? 'w-full max-w-md' : 'w-full'} ${saving ? 'opacity-50' : 'active:bg-blue-700'}`}
                 >
                   <Text className="text-white font-bold text-lg">
                     {saving ? 'Guardando...' : 'Guardar Reserva'}
@@ -460,6 +462,15 @@ export const AddReservationScreen = () => {
               markingType={'period'}
               markedDates={getMarkedDates()}
               onDayPress={onDayPress}
+              renderArrow={(direction: string) => (
+                <Ionicons
+                  name={
+                    direction === 'left' ? 'chevron-back' : 'chevron-forward'
+                  }
+                  size={24}
+                  color="#3B82F6"
+                />
+              )}
               theme={{
                 todayTextColor: '#3B82F6',
                 arrowColor: '#3B82F6',

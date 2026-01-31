@@ -19,7 +19,7 @@ import { ReservationCard } from '../components/ReservationCard'
 import { apiClient } from '../api/client'
 import { ApiRoom, ApiStatus } from '../api/types'
 import { Reservation } from '../data/reservations'
-import { format, parseISO, eachDayOfInterval, startOfMonth, endOfMonth } from 'date-fns'
+import { format, parseISO, eachDayOfInterval, startOfMonth, endOfMonth, addDays } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useFocusEffect } from '@react-navigation/native'
 import { generateBookingCommissionReport } from '../utils/pdfGenerator'
@@ -149,6 +149,7 @@ export const HomeScreen = () => {
     format(endOfMonth(new Date()), 'yyyy-MM-dd')
   )
   const [generatingReport, setGeneratingReport] = useState(false)
+  const [showReportCalendar, setShowReportCalendar] = useState<'start' | 'end' | null>(null)
 
   // Edit State
   const [editModalVisible, setEditModalVisible] = useState(false)
@@ -305,6 +306,14 @@ export const HomeScreen = () => {
 
     return marks
   }, [reservations, loading])
+
+  // Función para formatear fechas de manera segura evitando desfases de UTC
+  const formatSafeDate = (dateStr: string, formatStr: string) => {
+    if (!dateStr) return ''
+    // Añadimos la hora 12:00 para asegurar que al parsear no reste un día por zona horaria
+    const date = parseISO(`${dateStr}T12:00:00`)
+    return format(date, formatStr, { locale: es })
+  }
 
   const selectedDateReservations = useMemo(() => {
     return reservations.filter((res) => {
@@ -562,10 +571,8 @@ export const HomeScreen = () => {
                   {/* Selected Date Info */}
                   <View className="mb-8">
                     <Text className="mb-4 text-xl font-bold text-gray-800 border-b border-gray-200 pb-2">
-                      {format(parseISO(selectedDate), "EEEE d 'de' MMMM", {
-                        locale: es,
-                      })}
-                    </Text>
+                    {formatSafeDate(selectedDate, "EEEE d 'de' MMMM")}
+                  </Text>
 
                     <View className="flex-row flex-wrap -mx-2">
                       {selectedDateReservations.length > 0 ? (
@@ -608,14 +615,8 @@ export const HomeScreen = () => {
                           className="w-full xl:w-1/2 px-2 mb-4"
                         >
                           <Text className="mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider ml-1">
-                            Del{' '}
-                            {format(parseISO(res.startDate), 'dd MMM', {
-                              locale: es,
-                            })}{' '}
-                            al{' '}
-                            {format(parseISO(res.endDate), 'dd MMM', {
-                              locale: es,
-                            })}
+                            Del {formatSafeDate(res.startDate, 'dd MMM')} al{' '}
+                            {formatSafeDate(res.endDate, 'dd MMM')}
                           </Text>
                           <ReservationCard
                             reservation={res}
@@ -675,9 +676,7 @@ export const HomeScreen = () => {
             {/* Selected Date Info */}
             <View className="px-5 mb-6">
               <Text className="mb-3 text-lg font-bold text-gray-800">
-                {format(parseISO(selectedDate), "EEEE d 'de' MMMM", {
-                  locale: es,
-                })}
+                {formatSafeDate(selectedDate, "EEEE d 'de' MMMM")}
               </Text>
 
               {selectedDateReservations.length > 0 ? (
@@ -711,9 +710,8 @@ export const HomeScreen = () => {
               {upcomingReservations.map((res) => (
                 <View key={`upcoming-${res.id}`} className="mb-2">
                   <Text className="mb-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Del{' '}
-                    {format(parseISO(res.startDate), 'dd MMM', { locale: es })}{' '}
-                    al {format(parseISO(res.endDate), 'dd MMM', { locale: es })}
+                    Del {formatSafeDate(res.startDate, 'dd MMM')} al{' '}
+                    {formatSafeDate(res.endDate, 'dd MMM')}
                   </Text>
                   <ReservationCard
                     reservation={res}
@@ -1050,33 +1048,70 @@ export const HomeScreen = () => {
               </TouchableOpacity>
             </View>
 
-            <Text className="text-gray-600 mb-4">
+            <Text className="text-gray-600 mb-6">
               Seleccione el periodo para el informe de comisiones Booking.
             </Text>
 
-            <View className="mb-4">
-              <Text className="text-sm font-semibold text-gray-700 mb-2">
-                Fecha Inicio (YYYY-MM-DD)
-              </Text>
-              <TextInput
-                className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-gray-800"
-                value={reportStartDate}
-                onChangeText={setReportStartDate}
-                placeholder="2026-01-01"
-              />
+            <View className="flex-row gap-4 mb-6">
+              <TouchableOpacity 
+                onPress={() => setShowReportCalendar('start')}
+                className="flex-1"
+              >
+                <Text className="text-sm font-semibold text-gray-700 mb-2">
+                  Fecha Inicio
+                </Text>
+                <View className="bg-gray-50 border border-gray-200 rounded-xl p-4 flex-row justify-between items-center">
+                   <Text className="text-gray-800 font-medium">
+                     {formatSafeDate(reportStartDate, 'dd/MM/yyyy')}
+                   </Text>
+                   <Ionicons name="calendar" size={20} color="#3B82F6" />
+                 </View>
+               </TouchableOpacity>
+ 
+               <TouchableOpacity 
+                 onPress={() => setShowReportCalendar('end')}
+                 className="flex-1"
+               >
+                 <Text className="text-sm font-semibold text-gray-700 mb-2">
+                   Fecha Fin
+                 </Text>
+                 <View className="bg-gray-50 border border-gray-200 rounded-xl p-4 flex-row justify-between items-center">
+                   <Text className="text-gray-800 font-medium">
+                     {formatSafeDate(reportEndDate, 'dd/MM/yyyy')}
+                   </Text>
+                   <Ionicons name="calendar" size={20} color="#3B82F6" />
+                 </View>
+              </TouchableOpacity>
             </View>
 
-            <View className="mb-8">
-              <Text className="text-sm font-semibold text-gray-700 mb-2">
-                Fecha Fin (YYYY-MM-DD)
-              </Text>
-              <TextInput
-                className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-gray-800"
-                value={reportEndDate}
-                onChangeText={setReportEndDate}
-                placeholder="2026-01-31"
-              />
-            </View>
+            {showReportCalendar && (
+              <View className="mb-6 border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+                <Calendar
+                  onDayPress={(day: any) => {
+                    if (showReportCalendar === 'start') {
+                      setReportStartDate(day.dateString)
+                    } else {
+                      setReportEndDate(day.dateString)
+                    }
+                    setShowReportCalendar(null)
+                  }}
+                  markedDates={{
+                    [showReportCalendar === 'start' ? reportStartDate : reportEndDate]: {
+                      selected: true,
+                      disableTouchEvent: true,
+                      selectedColor: '#3B82F6',
+                    },
+                  }}
+                  theme={{
+                    todayTextColor: '#3B82F6',
+                    arrowColor: '#3B82F6',
+                    textMonthFontWeight: 'bold',
+                    textDayHeaderFontWeight: 'bold',
+                    selectedDayBackgroundColor: '#3B82F6',
+                  }}
+                />
+              </View>
+            )}
 
             <TouchableOpacity
               onPress={handleGenerateReport}

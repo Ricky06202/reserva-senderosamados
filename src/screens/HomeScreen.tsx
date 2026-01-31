@@ -473,6 +473,8 @@ export const HomeScreen = () => {
     }
   }
 
+  const isWeb = Platform.OS === 'web'
+
   if (loading && !refreshing) {
     return (
       <View className="flex-1 justify-center items-center bg-gray-50">
@@ -484,14 +486,9 @@ export const HomeScreen = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
-      <ScrollView
-        className="flex-1"
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        <View className="px-5 py-4 flex-row justify-between items-center">
+      <View className="flex-1">
+        {/* Header - Fixed */}
+        <View className="px-5 py-4 flex-row justify-between items-center bg-white shadow-sm z-50">
           <View>
             <Text className="text-2xl font-bold text-gray-900">
               Senderos Amados
@@ -506,79 +503,205 @@ export const HomeScreen = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Calendar */}
-        <View className="mb-6 bg-white pb-2 shadow-sm">
-          <Calendar
-            firstDay={1}
-            dayComponent={({ date, state, marking }: any) => (
-              <DayComponent
-                date={date}
-                state={state}
-                marking={marking}
-                onPress={(d: DateData) => setSelectedDate(d.dateString)}
-              />
-            )}
-            theme={{
-              todayTextColor: '#3B82F6',
-              arrowColor: '#3B82F6',
-              textMonthFontWeight: 'bold',
-              textDayHeaderFontWeight: 'bold',
-            }}
-            markedDates={markedDates}
-          />
-        </View>
-
-        {/* Selected Date Info */}
-        <View className="px-5 mb-6">
-          <Text className="mb-3 text-lg font-bold text-gray-800">
-            {format(parseISO(selectedDate), "EEEE d 'de' MMMM", { locale: es })}
-          </Text>
-
-          {selectedDateReservations.length > 0 ? (
-            selectedDateReservations.map((res) => (
-              <ReservationCard
-                key={res.id}
-                reservation={res}
-                onDelete={handleDelete}
-                onEdit={handleEdit}
-                onAddAnnotation={handleAddAnnotation}
-                onDeleteAnnotation={handleDeleteAnnotation}
-              />
-            ))
-          ) : (
-            <View className="rounded-xl border-dashed border-2 border-gray-200 p-6 items-center">
-              <Text className="text-gray-400">
-                Sin reservas activas este día
-              </Text>
+        {isWeb ? (
+          <View className="flex-1 flex-row">
+            {/* Left Column: Calendar */}
+            <View className="w-[45%] border-r border-gray-200 bg-white">
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <View className="p-4">
+                  <Calendar
+                    firstDay={1}
+                    dayComponent={({ date, state, marking }: any) => (
+                      <DayComponent
+                        date={date}
+                        state={state}
+                        marking={marking}
+                        onPress={(d: DateData) => setSelectedDate(d.dateString)}
+                      />
+                    )}
+                    theme={{
+                      todayTextColor: '#3B82F6',
+                      arrowColor: '#3B82F6',
+                      textMonthFontWeight: 'bold',
+                      textDayHeaderFontWeight: 'bold',
+                    }}
+                    markedDates={markedDates}
+                  />
+                </View>
+              </ScrollView>
             </View>
-          )}
-        </View>
 
-        {/* Upcoming Reservations */}
-        <View className="px-5 mb-8">
-          <View className="flex-row items-center justify-between mb-3">
-            <Text className="text-lg font-bold text-gray-800">
-              Próximas Reservas
-            </Text>
+            {/* Right Column: Details & Upcoming */}
+            <View className="flex-1 bg-gray-50">
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
+                  />
+                }
+              >
+                <View className="p-6">
+                  {/* Selected Date Info */}
+                  <View className="mb-8">
+                    <Text className="mb-4 text-xl font-bold text-gray-800 border-b border-gray-200 pb-2">
+                      {format(parseISO(selectedDate), "EEEE d 'de' MMMM", {
+                        locale: es,
+                      })}
+                    </Text>
+
+                    <View className="flex-row flex-wrap -mx-2">
+                      {selectedDateReservations.length > 0 ? (
+                        selectedDateReservations.map((res) => (
+                          <View
+                            key={res.id}
+                            className="w-full xl:w-1/2 px-2 mb-4"
+                          >
+                            <ReservationCard
+                              reservation={res}
+                              onDelete={handleDelete}
+                              onEdit={handleEdit}
+                              onAddAnnotation={handleAddAnnotation}
+                              onDeleteAnnotation={handleDeleteAnnotation}
+                            />
+                          </View>
+                        ))
+                      ) : (
+                        <View className="w-full px-2">
+                          <View className="rounded-xl border-dashed border-2 border-gray-200 p-8 items-center bg-white">
+                            <Text className="text-gray-400 text-lg">
+                              Sin reservas activas este día
+                            </Text>
+                          </View>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+
+                  {/* Upcoming Reservations */}
+                  <View>
+                    <Text className="mb-4 text-xl font-bold text-gray-800 border-b border-gray-200 pb-2">
+                      Próximas Reservas
+                    </Text>
+
+                    <View className="flex-row flex-wrap -mx-2">
+                      {upcomingReservations.map((res) => (
+                        <View
+                          key={`upcoming-${res.id}`}
+                          className="w-full xl:w-1/2 px-2 mb-4"
+                        >
+                          <Text className="mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider ml-1">
+                            Del{' '}
+                            {format(parseISO(res.startDate), 'dd MMM', {
+                              locale: es,
+                            })}{' '}
+                            al{' '}
+                            {format(parseISO(res.endDate), 'dd MMM', {
+                              locale: es,
+                            })}
+                          </Text>
+                          <ReservationCard
+                            reservation={res}
+                            onDelete={handleDelete}
+                            onEdit={handleEdit}
+                            onAddAnnotation={handleAddAnnotation}
+                            onDeleteAnnotation={handleDeleteAnnotation}
+                          />
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                </View>
+              </ScrollView>
+            </View>
           </View>
-
-          {upcomingReservations.map((res) => (
-            <View key={`upcoming-${res.id}`} className="mb-2">
-              <Text className="mb-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Del {format(parseISO(res.startDate), 'dd MMM', { locale: es })}{' '}
-                al {format(parseISO(res.endDate), 'dd MMM', { locale: es })}
-              </Text>
-              <ReservationCard
-                reservation={res}
-                onDelete={handleDelete}
-                onEdit={handleEdit}
-                onAddAnnotation={handleAddAnnotation}
-                onDeleteAnnotation={handleDeleteAnnotation}
+        ) : (
+          <ScrollView
+            className="flex-1"
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+          >
+            {/* Calendar */}
+            <View className="mb-6 bg-white pb-2 shadow-sm">
+              <Calendar
+                firstDay={1}
+                dayComponent={({ date, state, marking }: any) => (
+                  <DayComponent
+                    date={date}
+                    state={state}
+                    marking={marking}
+                    onPress={(d: DateData) => setSelectedDate(d.dateString)}
+                  />
+                )}
+                theme={{
+                  todayTextColor: '#3B82F6',
+                  arrowColor: '#3B82F6',
+                  textMonthFontWeight: 'bold',
+                  textDayHeaderFontWeight: 'bold',
+                }}
+                markedDates={markedDates}
               />
             </View>
-          ))}
-        </View>
-      </ScrollView>
+
+            {/* Selected Date Info */}
+            <View className="px-5 mb-6">
+              <Text className="mb-3 text-lg font-bold text-gray-800">
+                {format(parseISO(selectedDate), "EEEE d 'de' MMMM", {
+                  locale: es,
+                })}
+              </Text>
+
+              {selectedDateReservations.length > 0 ? (
+                selectedDateReservations.map((res) => (
+                  <ReservationCard
+                    key={res.id}
+                    reservation={res}
+                    onDelete={handleDelete}
+                    onEdit={handleEdit}
+                    onAddAnnotation={handleAddAnnotation}
+                    onDeleteAnnotation={handleDeleteAnnotation}
+                  />
+                ))
+              ) : (
+                <View className="rounded-xl border-dashed border-2 border-gray-200 p-6 items-center">
+                  <Text className="text-gray-400">
+                    Sin reservas activas este día
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {/* Upcoming Reservations */}
+            <View className="px-5 mb-8">
+              <View className="flex-row items-center justify-between mb-3">
+                <Text className="text-lg font-bold text-gray-800">
+                  Próximas Reservas
+                </Text>
+              </View>
+
+              {upcomingReservations.map((res) => (
+                <View key={`upcoming-${res.id}`} className="mb-2">
+                  <Text className="mb-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Del{' '}
+                    {format(parseISO(res.startDate), 'dd MMM', { locale: es })}{' '}
+                    al {format(parseISO(res.endDate), 'dd MMM', { locale: es })}
+                  </Text>
+                  <ReservationCard
+                    reservation={res}
+                    onDelete={handleDelete}
+                    onEdit={handleEdit}
+                    onAddAnnotation={handleAddAnnotation}
+                    onDeleteAnnotation={handleDeleteAnnotation}
+                  />
+                </View>
+              ))}
+            </View>
+          </ScrollView>
+        )}
+      </View>
 
       {/* Delete Confirmation Modal */}
       <Modal
@@ -627,8 +750,8 @@ export const HomeScreen = () => {
         visible={editModalVisible}
         onRequestClose={() => setEditModalVisible(false)}
       >
-        <View className="flex-1 bg-black/60 justify-end">
-          <View className="bg-white rounded-t-3xl p-6 h-[85%]">
+        <View className={`flex-1 bg-black/60 ${isWeb ? 'justify-center items-center p-4' : 'justify-end'}`}>
+          <View className={`bg-white p-6 ${isWeb ? 'rounded-3xl w-full max-w-2xl h-[90%]' : 'rounded-t-3xl h-[85%]'}`}>
             <View className="flex-row justify-between items-center mb-6">
               <Text className="text-2xl font-bold text-gray-900">
                 Editar Reserva

@@ -7,6 +7,7 @@ import {
   ScrollView,
   Switch,
   Alert,
+  Platform,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -38,6 +39,8 @@ export const AddReservationScreen = () => {
   const [tempStartDate, setTempStartDate] = useState('')
   const [tempEndDate, setTempEndDate] = useState('')
   const [saving, setSaving] = useState(false)
+
+  const isWeb = Platform.OS === 'web'
 
   useEffect(() => {
     const fetchRooms = async () => {
@@ -202,208 +205,248 @@ export const AddReservationScreen = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
-      <View className="px-5 py-4 border-b border-gray-200 bg-white">
-        <Text className="text-xl font-bold text-gray-900">Nueva Reserva</Text>
-      </View>
-
-      <ScrollView className="flex-1 px-5 py-6">
-        {/* Nombre del Cliente */}
-        <View className="mb-4">
-          <Text className="text-gray-700 font-semibold mb-2">
-            Nombre del Cliente
-          </Text>
-          <TextInput
-            className="bg-white border border-gray-300 rounded-lg p-3 text-gray-800"
-            placeholder="Ej. Familia Pérez"
-            value={formData.name}
-            onChangeText={(text) => updateField('name', text)}
-          />
+      <View className="flex-1">
+        <View className="px-5 py-4 border-b border-gray-200 bg-white">
+          <Text className="text-xl font-bold text-gray-900">Nueva Reserva</Text>
         </View>
 
-        {/* Habitación */}
-        <View className="mb-4">
-          <Text className="text-gray-700 font-semibold mb-2">
-            Habitación / Cabaña
-          </Text>
-          <View className="flex-row flex-wrap gap-2">
-            {rooms.length > 0 ? (
-              rooms.map((roomItem) => (
-                <TouchableOpacity
-                  key={roomItem.id}
-                  onPress={() => {
-                    updateField('room', roomItem.nombre)
-                    updateField('roomId', roomItem.id)
-                  }}
-                  className={`px-4 py-2 rounded-full border ${
-                    formData.roomId === roomItem.id
-                      ? getRoomSelectionColor(roomItem.id, roomItem.nombre)
-                      : 'bg-white border-gray-300'
-                  }`}
-                >
-                  <Text
-                    className={`font-medium ${
-                      formData.roomId === roomItem.id
-                        ? 'text-white'
-                        : 'text-gray-700'
-                    }`}
+        <ScrollView className="flex-1">
+          <View className={`p-6 ${isWeb ? 'flex-row flex-wrap justify-center' : ''}`}>
+            <View className={isWeb ? 'w-full max-w-4xl flex-row flex-wrap' : ''}>
+              {/* Columna Izquierda (Web) / Arriba (Mobile) */}
+              <View className={isWeb ? 'w-1/2 pr-4' : 'w-full'}>
+                {/* Nombre del Cliente */}
+                <View className="mb-4">
+                  <Text className="text-gray-700 font-semibold mb-2">
+                    Nombre del Cliente
+                  </Text>
+                  <TextInput
+                    className="bg-white border border-gray-300 rounded-lg p-3 text-gray-800"
+                    placeholder="Ej. Familia Pérez"
+                    value={formData.name}
+                    onChangeText={(text) => updateField('name', text)}
+                  />
+                </View>
+
+                {/* Habitación */}
+                <View className="mb-4">
+                  <Text className="text-gray-700 font-semibold mb-2">
+                    Habitación / Cabaña
+                  </Text>
+                  <View className="flex-row flex-wrap gap-2">
+                    {rooms.length > 0 ? (
+                      rooms.map((roomItem) => (
+                        <TouchableOpacity
+                          key={roomItem.id}
+                          onPress={() => {
+                            updateField('room', roomItem.nombre)
+                            updateField('roomId', roomItem.id)
+                          }}
+                          className={`px-4 py-2 rounded-full border ${
+                            formData.roomId === roomItem.id
+                              ? getRoomSelectionColor(
+                                  roomItem.id,
+                                  roomItem.nombre
+                                )
+                              : 'bg-white border-gray-300'
+                          }`}
+                        >
+                          <Text
+                            className={`font-medium ${
+                              formData.roomId === roomItem.id
+                                ? 'text-white'
+                                : 'text-gray-700'
+                            }`}
+                          >
+                            {roomItem.nombre}
+                          </Text>
+                        </TouchableOpacity>
+                      ))
+                    ) : (
+                      <Text className="text-gray-500 italic">
+                        Cargando habitaciones...
+                      </Text>
+                    )}
+                  </View>
+                </View>
+
+                {/* Fechas */}
+                <View className="mb-6">
+                  <Text className="text-gray-700 font-semibold mb-2">
+                    Periodo de Reserva
+                  </Text>
+                  <TouchableOpacity
+                    className="bg-white border border-gray-300 rounded-lg p-4 flex-row justify-between items-center"
+                    onPress={openCalendar}
                   >
-                    {roomItem.nombre}
+                    <View className="flex-row items-center">
+                      <Ionicons
+                        name="calendar-outline"
+                        size={20}
+                        color="#6B7280"
+                      />
+                      <Text className="text-gray-800 ml-2 font-medium">
+                        {format(parseISO(formData.startDate), 'dd MMM', {
+                          locale: es,
+                        })}{' '}
+                        -{' '}
+                        {format(parseISO(formData.endDate), 'dd MMM yyyy', {
+                          locale: es,
+                        })}
+                      </Text>
+                    </View>
+                    <Text className="text-blue-500 font-bold text-xs">
+                      CAMBIAR
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Columna Derecha (Web) / Abajo (Mobile) */}
+              <View className={isWeb ? 'w-1/2 pl-4' : 'w-full'}>
+                {/* Personas y Precio (Fila) */}
+                <View className="flex-row justify-between mb-4">
+                  <View className="w-[48%]">
+                    <Text className="text-gray-700 font-semibold mb-2">
+                      Personas
+                    </Text>
+                    <TextInput
+                      className="bg-white border border-gray-300 rounded-lg p-3 text-gray-800"
+                      placeholder="0"
+                      keyboardType="numeric"
+                      value={formData.peopleCount}
+                      onChangeText={(text) =>
+                        updateField('peopleCount', text.replace(/[^0-9]/g, ''))
+                      }
+                    />
+                  </View>
+                  <View className="w-[48%]">
+                    <Text className="text-gray-700 font-semibold mb-2">
+                      Precio Total ($)
+                    </Text>
+                    <TextInput
+                      className="bg-white border border-gray-300 rounded-lg p-3 text-gray-800"
+                      placeholder="0.00"
+                      keyboardType="numeric"
+                      value={formData.totalPrice}
+                      onChangeText={(text) => updateField('totalPrice', text)}
+                    />
+                  </View>
+                </View>
+
+                {/* Pago y Saldo (Fila) */}
+                <View className="flex-row justify-between mb-4">
+                  <View className="w-[48%]">
+                    <Text className="text-gray-700 font-semibold mb-2">
+                      Monto Pagado (Abono)
+                    </Text>
+                    <TextInput
+                      className="bg-white border border-gray-300 rounded-lg p-3 text-gray-800"
+                      placeholder="0.00"
+                      keyboardType="numeric"
+                      value={formData.amountPaid}
+                      onChangeText={(text) => updateField('amountPaid', text)}
+                    />
+                  </View>
+                  <View className="w-[48%]">
+                    <Text className="text-gray-700 font-semibold mb-2">
+                      Saldo Pendiente
+                    </Text>
+                    <View className="bg-gray-100 border border-gray-200 rounded-lg p-3 h-[50px] justify-center">
+                      <Text className="text-gray-800 font-bold">
+                        ${' '}
+                        {(
+                          Number(formData.totalPrice || 0) -
+                          Number(formData.amountPaid || 0)
+                        ).toFixed(2)}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Comisión Booking */}
+                <View className="flex-row justify-between mb-4">
+                  <View className="w-[48%]">
+                    <Text className="text-gray-700 font-semibold mb-2">
+                      Comisión Booking ($)
+                    </Text>
+                    <TextInput
+                      className="bg-white border border-gray-300 rounded-lg p-3 text-gray-800"
+                      placeholder="0.00"
+                      keyboardType="numeric"
+                      value={formData.bookingCommission}
+                      onChangeText={(text) =>
+                        updateField('bookingCommission', text)
+                      }
+                    />
+                  </View>
+                  <View className="w-[48%]">
+                    <Text className="text-gray-700 font-semibold mb-2">
+                      Estado Comisión
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() =>
+                        updateField(
+                          'isCommissionPaid',
+                          !formData.isCommissionPaid
+                        )
+                      }
+                      className={`h-[50px] rounded-lg border p-3 items-center justify-center ${
+                        formData.isCommissionPaid
+                          ? 'bg-green-500 border-green-500'
+                          : 'bg-white border-gray-300'
+                      }`}
+                    >
+                      <Text
+                        className={`font-semibold ${
+                          formData.isCommissionPaid
+                            ? 'text-white'
+                            : 'text-gray-700'
+                        }`}
+                      >
+                        {formData.isCommissionPaid ? 'PAGADO' : 'PENDIENTE'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* Estado de Pago */}
+                <View className="mb-8 flex-row items-center justify-between bg-white p-4 rounded-lg border border-gray-200">
+                  <View>
+                    <Text className="text-gray-700 font-semibold">
+                      Estado de Pago
+                    </Text>
+                    <Text
+                      className={`text-xs font-bold mt-1 ${formData.isPaid ? 'text-green-600' : 'text-yellow-600'}`}
+                    >
+                      {formData.isPaid ? 'PAGADO' : 'POR COBRAR'}
+                    </Text>
+                  </View>
+                  <Switch
+                    value={formData.isPaid}
+                    onValueChange={(val) => updateField('isPaid', val)}
+                    trackColor={{ false: '#D1D5DB', true: '#86EFAC' }}
+                    thumbColor={formData.isPaid ? '#22C55E' : '#F3F4F6'}
+                  />
+                </View>
+              </View>
+
+              {/* Botón Guardar - Centrado en Web */}
+              <View className={`w-full ${isWeb ? 'items-center mt-4' : ''}`}>
+                <TouchableOpacity
+                  onPress={handleSave}
+                  disabled={saving}
+                  className={`bg-blue-600 rounded-xl py-4 items-center shadow-md ${isWeb ? 'w-full max-w-md' : 'w-full'} ${saving ? 'opacity-50' : 'active:bg-blue-700'}`}
+                >
+                  <Text className="text-white font-bold text-lg">
+                    {saving ? 'Guardando...' : 'Guardar Reserva'}
                   </Text>
                 </TouchableOpacity>
-              ))
-            ) : (
-              <Text className="text-gray-500 italic">
-                Cargando habitaciones...
-              </Text>
-            )}
-          </View>
-        </View>
-
-        {/* Personas y Precio (Fila) */}
-        <View className="flex-row justify-between mb-4">
-          <View className="w-[48%]">
-            <Text className="text-gray-700 font-semibold mb-2">Personas</Text>
-            <TextInput
-              className="bg-white border border-gray-300 rounded-lg p-3 text-gray-800"
-              placeholder="0"
-              keyboardType="numeric"
-              value={formData.peopleCount}
-              onChangeText={(text) =>
-                updateField('peopleCount', text.replace(/[^0-9]/g, ''))
-              }
-            />
-          </View>
-          <View className="w-[48%]">
-            <Text className="text-gray-700 font-semibold mb-2">
-              Precio Total ($)
-            </Text>
-            <TextInput
-              className="bg-white border border-gray-300 rounded-lg p-3 text-gray-800"
-              placeholder="0.00"
-              keyboardType="numeric"
-              value={formData.totalPrice}
-              onChangeText={(text) => updateField('totalPrice', text)}
-            />
-          </View>
-        </View>
-
-        {/* Pago y Saldo (Fila) */}
-        <View className="flex-row justify-between mb-4">
-          <View className="w-[48%]">
-            <Text className="text-gray-700 font-semibold mb-2">
-              Monto Pagado (Abono)
-            </Text>
-            <TextInput
-              className="bg-white border border-gray-300 rounded-lg p-3 text-gray-800"
-              placeholder="0.00"
-              keyboardType="numeric"
-              value={formData.amountPaid}
-              onChangeText={(text) => updateField('amountPaid', text)}
-            />
-          </View>
-          <View className="w-[48%]">
-            <Text className="text-gray-700 font-semibold mb-2">
-              Saldo Pendiente
-            </Text>
-            <View className="bg-gray-100 border border-gray-200 rounded-lg p-3 h-[50px] justify-center">
-              <Text className="text-gray-800 font-bold">
-                $ {(Number(formData.totalPrice || 0) - Number(formData.amountPaid || 0)).toFixed(2)}
-              </Text>
+              </View>
             </View>
           </View>
-        </View>
-
-        {/* Comisión Booking */}
-        <View className="flex-row justify-between mb-4">
-          <View className="w-[48%]">
-            <Text className="text-gray-700 font-semibold mb-2">
-              Comisión Booking ($)
-            </Text>
-            <TextInput
-              className="bg-white border border-gray-300 rounded-lg p-3 text-gray-800"
-              placeholder="0.00"
-              keyboardType="numeric"
-              value={formData.bookingCommission}
-              onChangeText={(text) => updateField('bookingCommission', text)}
-            />
-          </View>
-          <View className="w-[48%]">
-            <Text className="text-gray-700 font-semibold mb-2">
-              Estado Comisión
-            </Text>
-            <TouchableOpacity
-              onPress={() =>
-                updateField('isCommissionPaid', !formData.isCommissionPaid)
-              }
-              className={`flex-1 rounded-lg border p-3 items-center justify-center ${
-                formData.isCommissionPaid
-                  ? 'bg-green-500 border-green-500'
-                  : 'bg-white border-gray-300'
-              }`}
-            >
-              <Text
-                className={`font-semibold ${
-                  formData.isCommissionPaid ? 'text-white' : 'text-gray-700'
-                }`}
-              >
-                {formData.isCommissionPaid ? 'PAGADO' : 'PENDIENTE'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Fechas */}
-        <View className="mb-6">
-          <Text className="text-gray-700 font-semibold mb-2">
-            Periodo de Reserva
-          </Text>
-          <TouchableOpacity
-            className="bg-white border border-gray-300 rounded-lg p-4 flex-row justify-between items-center"
-            onPress={openCalendar}
-          >
-            <View className="flex-row items-center">
-              <Ionicons name="calendar-outline" size={20} color="#6B7280" />
-              <Text className="text-gray-800 ml-2 font-medium">
-                {format(parseISO(formData.startDate), 'dd MMM', { locale: es })}{' '}
-                -{' '}
-                {format(parseISO(formData.endDate), 'dd MMM yyyy', {
-                  locale: es,
-                })}
-              </Text>
-            </View>
-            <Text className="text-blue-500 font-bold text-xs">CAMBIAR</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Estado de Pago */}
-        <View className="mb-8 flex-row items-center justify-between bg-white p-4 rounded-lg border border-gray-200">
-          <View>
-            <Text className="text-gray-700 font-semibold">Estado de Pago</Text>
-            <Text
-              className={`text-xs font-bold mt-1 ${formData.isPaid ? 'text-green-600' : 'text-yellow-600'}`}
-            >
-              {formData.isPaid ? 'PAGADO' : 'POR COBRAR'}
-            </Text>
-          </View>
-          <Switch
-            value={formData.isPaid}
-            onValueChange={(val) => updateField('isPaid', val)}
-            trackColor={{ false: '#D1D5DB', true: '#86EFAC' }}
-            thumbColor={formData.isPaid ? '#22C55E' : '#F3F4F6'}
-          />
-        </View>
-
-        {/* Botón Guardar */}
-        <TouchableOpacity
-          onPress={handleSave}
-          disabled={saving}
-          className={`bg-blue-600 rounded-xl py-4 items-center shadow-md ${saving ? 'opacity-50' : 'active:bg-blue-700'}`}
-        >
-          <Text className="text-white font-bold text-lg">
-            {saving ? 'Guardando...' : 'Guardar Reserva'}
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
+        </ScrollView>
+      </View>
 
       {/* Calendar Modal */}
       {showCalendar && (

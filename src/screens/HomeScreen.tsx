@@ -83,7 +83,7 @@ const DayComponent = ({ date, state, marking, onPress, isLargeScreen }: any) => 
   return (
     <TouchableOpacity
       onPress={() => onPress(date)}
-      className={`${isLargeScreen ? 'h-32' : 'h-16'} w-full items-center justify-start pt-1 overflow-visible z-10`}
+      className={`${isLargeScreen ? 'h-32' : 'h-24'} w-full items-center justify-start pt-1 overflow-visible z-10`}
     >
       <Text
         className={`text-xs mb-0.5 ${state === 'disabled' ? 'text-gray-300' : 'text-gray-900'} z-30`}
@@ -96,9 +96,8 @@ const DayComponent = ({ date, state, marking, onPress, isLargeScreen }: any) => 
 
         let barStyle = 'h-5 justify-center absolute'
         let textStyle = 'text-[9px] text-white font-bold ml-1 leading-tight'
-        const topPosition = (isLargeScreen ? 20 : 18) + rowIndex * (isLargeScreen ? 22 : 12)
-
-        if (!isLargeScreen && rowIndex > 1) return null // Limit rows on mobile calendar
+        const topPosition =
+          (isLargeScreen ? 20 : 18) + rowIndex * (isLargeScreen ? 22 : 12)
 
         if (status === 'start') barStyle += ' ml-1 rounded-l-md w-[130%] z-20'
         else if (status === 'middle') barStyle += ' w-[140%] -ml-[20%] z-10'
@@ -107,7 +106,7 @@ const DayComponent = ({ date, state, marking, onPress, isLargeScreen }: any) => 
         else if (status === 'single') barStyle += ' mx-1 rounded-md z-20'
 
         // On mobile, bars should be thinner
-        if (!isLargeScreen) barStyle = barStyle.replace('h-5', 'h-2')
+        if (!isLargeScreen) barStyle = barStyle.replace('h-5', 'h-2.5')
 
         return (
           <View
@@ -492,8 +491,8 @@ export const HomeScreen = () => {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <View className="flex-1">
+    <SafeAreaView className="flex-1 bg-gray-100">
+      <View className={`flex-1 ${isLargeScreen ? 'max-w-[1600px] w-full mx-auto shadow-2xl bg-gray-50' : 'bg-gray-50'}`}>
         {/* Header - Fixed */}
         <View className="px-5 py-4 flex-row justify-between items-center bg-white shadow-sm z-50">
           <View>

@@ -206,8 +206,8 @@ export const AddReservationScreen = () => {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <View className="flex-1">
+    <SafeAreaView className="flex-1 bg-gray-100">
+      <View className={`flex-1 ${isLargeScreen ? 'max-w-[1200px] w-full mx-auto shadow-2xl bg-gray-50' : 'bg-gray-50'}`}>
         <View className="px-5 py-4 border-b border-gray-200 bg-white">
           <Text className="text-xl font-bold text-gray-900">Nueva Reserva</Text>
         </View>

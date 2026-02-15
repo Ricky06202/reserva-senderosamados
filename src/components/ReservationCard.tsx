@@ -1,9 +1,9 @@
 import { View, Text, TouchableOpacity, TextInput } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { format } from 'date-fns'
+import { format, differenceInDays, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Reservation } from '../data/reservations'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 
 interface Props {
   reservation: Reservation
@@ -51,6 +51,26 @@ export const ReservationCard = ({
     return format(date, "d 'de' MMM", { locale: es })
   }
 
+  const { nights, subtotal, commission, totalAmount, balance, pricePerNight } =
+    useMemo(() => {
+      const start = parseISO(reservation.startDate)
+      const end = parseISO(reservation.endDate)
+      const n = Math.max(1, differenceInDays(end, start))
+      const st = reservation.totalPrice
+      const comm = st * 0.2
+      const ta = st + comm
+      const bal = ta - (reservation.amountPaid || 0)
+      const ppn = st / n
+      return {
+        nights: n,
+        subtotal: st,
+        commission: comm,
+        totalAmount: ta,
+        balance: bal,
+        pricePerNight: ppn,
+      }
+    }, [reservation])
+
   const handleAddAnnotation = () => {
     if (newAnnotation.trim() && onAddAnnotation) {
       onAddAnnotation(reservation.id, newAnnotation)
@@ -83,48 +103,48 @@ export const ReservationCard = ({
           </View>
           <View className="pt-2 mt-2 border-t border-gray-100">
             <View className="flex-row justify-between items-center mb-1">
-              <Text className="text-xs text-gray-500">Total Hospedaje:</Text>
-              <Text className="text-sm font-bold text-gray-900">
-                ${reservation.totalPrice.toFixed(2)}
+              <Text className="text-[10px] text-gray-500 italic">
+                {nights} noche{nights > 1 ? 's' : ''} x $
+                {pricePerNight.toFixed(2)}
+              </Text>
+              <Text className="text-xs font-semibold text-gray-600">
+                ${subtotal.toFixed(2)}
               </Text>
             </View>
             <View className="flex-row justify-between items-center mb-1">
-              <Text className="text-xs text-gray-500">Abonado:</Text>
-              <Text className="text-sm font-bold text-green-600">
+              <Text className="text-xs text-gray-500">Comisión Booking:</Text>
+              <Text className="text-xs font-bold text-gray-600">
+                ${commission.toFixed(2)}
+              </Text>
+            </View>
+            <View className="flex-row justify-between items-center mb-2 pt-1 border-t border-gray-50">
+              <Text className="text-xs font-bold text-gray-800">
+                Total Habitación:
+              </Text>
+              <Text className="text-sm font-bold text-gray-900">
+                ${totalAmount.toFixed(2)}
+              </Text>
+            </View>
+
+            <View className="flex-row justify-between items-center mb-1">
+              <Text className="text-[10px] text-gray-500 uppercase font-medium">
+                Abonado:
+              </Text>
+              <Text className="text-xs font-bold text-green-600">
                 ${(reservation.amountPaid || 0).toFixed(2)}
               </Text>
             </View>
             <View className="flex-row justify-between items-center">
-              <Text className="text-xs text-gray-500">Saldo Pendiente:</Text>
-              <Text className="text-sm font-bold text-red-600">
-                ${(reservation.totalPrice - (reservation.amountPaid || 0)).toFixed(2)}
+              <Text className="text-[10px] text-gray-500 uppercase font-medium">
+                Saldo Pendiente:
+              </Text>
+              <Text className="text-xs font-bold text-red-600">
+                ${balance.toFixed(2)}
               </Text>
             </View>
           </View>
 
-          <View className="flex-row justify-between items-center mt-3">
-            <View className="flex-row items-center">
-              {reservation.bookingCommission !== undefined &&
-                reservation.bookingCommission > 0 && (
-                  <View
-                    className={`rounded-md px-1.5 py-0.5 ${
-                      reservation.bookingCommissionStatus === 'pagado'
-                        ? 'bg-green-50 border border-green-100'
-                        : 'bg-red-50 border border-red-100'
-                    }`}
-                  >
-                    <Text
-                      className={`text-[10px] font-bold ${
-                        reservation.bookingCommissionStatus === 'pagado'
-                          ? 'text-green-700'
-                          : 'text-red-700'
-                      }`}
-                    >
-                      Comisión BK: ${reservation.bookingCommission.toFixed(2)}
-                    </Text>
-                  </View>
-                )}
-            </View>
+          <View className="flex-row justify-end items-center mt-3">
             <View className={`px-3 py-1 rounded-full ${statusColor}`}>
               <Text className="text-xs font-medium capitalize">
                 {reservation.status}

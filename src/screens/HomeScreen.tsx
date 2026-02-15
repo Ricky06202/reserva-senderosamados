@@ -19,7 +19,14 @@ import { ReservationCard } from '../components/ReservationCard'
 import { apiClient } from '../api/client'
 import { ApiRoom, ApiStatus } from '../api/types'
 import { Reservation } from '../data/reservations'
-import { format, parseISO, eachDayOfInterval, startOfMonth, endOfMonth, addDays } from 'date-fns'
+import {
+  format,
+  parseISO,
+  eachDayOfInterval,
+  startOfMonth,
+  endOfMonth,
+  addDays,
+} from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useFocusEffect } from '@react-navigation/native'
 import { generateBookingCommissionReport } from '../utils/pdfGenerator'
@@ -77,7 +84,13 @@ interface DayMarking {
   color: string
 }
 
-const DayComponent = ({ date, state, marking, onPress, isLargeScreen }: any) => {
+const DayComponent = ({
+  date,
+  state,
+  marking,
+  onPress,
+  isLargeScreen,
+}: any) => {
   const dayReservations: DayMarking[] = marking?.customMarks || []
 
   return (
@@ -85,11 +98,15 @@ const DayComponent = ({ date, state, marking, onPress, isLargeScreen }: any) => 
       onPress={() => onPress(date)}
       className={`${isLargeScreen ? 'h-32' : 'h-24'} w-full items-center justify-start pt-1 overflow-visible z-10`}
     >
-      <Text
-        className={`text-xs mb-0.5 ${state === 'disabled' ? 'text-gray-300' : 'text-gray-900'} z-30`}
+      <View
+        className={`${state === 'today' ? 'bg-purple-600 rounded-full w-6 h-6 items-center justify-center' : ''} mb-0.5 z-30`}
       >
-        {date.day}
-      </Text>
+        <Text
+          className={`text-xs ${state === 'today' ? 'text-white font-bold' : state === 'disabled' ? 'text-gray-300' : 'text-gray-900'}`}
+        >
+          {date.day}
+        </Text>
+      </View>
 
       {dayReservations.map((mark, index) => {
         const { reservation, status, rowIndex, color } = mark
@@ -111,7 +128,7 @@ const DayComponent = ({ date, state, marking, onPress, isLargeScreen }: any) => 
         return (
           <View
             key={`res-${reservation.id}-${date.dateString}`}
-            className={`${barStyle} ${color}`}
+            className={`${barStyle} ${color} ${status === 'end' ? 'opacity-50' : ''}`}
             style={{ top: topPosition }}
           >
             {isLargeScreen && (status === 'start' || status === 'single') && (
@@ -130,26 +147,28 @@ const DayComponent = ({ date, state, marking, onPress, isLargeScreen }: any) => 
 
 export const HomeScreen = () => {
   const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split('T')[0]
+    new Date().toISOString().split('T')[0],
   )
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [deleteModalVisible, setDeleteModalVisible] = useState(false)
   const [reservationToDelete, setReservationToDelete] = useState<string | null>(
-    null
+    null,
   )
 
   // Report State
   const [reportModalVisible, setReportModalVisible] = useState(false)
   const [reportStartDate, setReportStartDate] = useState(
-    format(startOfMonth(new Date()), 'yyyy-MM-dd')
+    format(startOfMonth(new Date()), 'yyyy-MM-dd'),
   )
   const [reportEndDate, setReportEndDate] = useState(
-    format(endOfMonth(new Date()), 'yyyy-MM-dd')
+    format(endOfMonth(new Date()), 'yyyy-MM-dd'),
   )
   const [generatingReport, setGeneratingReport] = useState(false)
-  const [showReportCalendar, setShowReportCalendar] = useState<'start' | 'end' | null>(null)
+  const [showReportCalendar, setShowReportCalendar] = useState<
+    'start' | 'end' | null
+  >(null)
 
   // Edit State
   const [editModalVisible, setEditModalVisible] = useState(false)
@@ -219,7 +238,7 @@ export const HomeScreen = () => {
     useCallback(() => {
       fetchReservations()
       fetchMetadata()
-    }, [fetchReservations, fetchMetadata])
+    }, [fetchReservations, fetchMetadata]),
   )
 
   const onRefresh = useCallback(() => {
@@ -232,7 +251,7 @@ export const HomeScreen = () => {
     if (loading) return {}
     const marks: any = {}
     const sortedReservations = [...reservations].sort((a, b) =>
-      a.startDate.localeCompare(b.startDate)
+      a.startDate.localeCompare(b.startDate),
     )
 
     const dailyOccupancy: Record<string, number[]> = {}
@@ -326,7 +345,7 @@ export const HomeScreen = () => {
   const upcomingReservations = useMemo(() => {
     const today = new Date().toISOString().split('T')[0]
     return reservations
-      .filter((res) => res.endDate >= today)
+      .filter((res) => res.startDate > today)
       .sort((a, b) => a.startDate.localeCompare(b.startDate))
       .slice(0, 3)
   }, [reservations])
@@ -335,15 +354,15 @@ export const HomeScreen = () => {
     setGeneratingReport(true)
     // Cerramos el modal primero para evitar que aparezca en la captura/impresión en Web
     setReportModalVisible(false)
-    
+
     // Pequeña espera para que el modal se cierre completamente
-    await new Promise(resolve => setTimeout(resolve, 300))
+    await new Promise((resolve) => setTimeout(resolve, 300))
 
     try {
       await generateBookingCommissionReport(
         reservations,
         reportStartDate,
-        reportEndDate
+        reportEndDate,
       )
     } catch (error) {
       Alert.alert('Error', 'No se pudo generar el informe')
@@ -391,7 +410,8 @@ export const HomeScreen = () => {
       startDate: reservation.startDate,
       endDate: reservation.endDate,
       bookingCommission: (reservation.bookingCommission || 0).toString(),
-      bookingCommissionStatus: reservation.bookingCommissionStatus || 'pendiente',
+      bookingCommissionStatus:
+        reservation.bookingCommissionStatus || 'pendiente',
     })
     setEditModalVisible(true)
   }
@@ -439,7 +459,7 @@ export const HomeScreen = () => {
           }
         }
         return res
-      })
+      }),
     )
 
     const newAnnotation = await apiClient.addAnnotation(reservaId, content)
@@ -454,12 +474,12 @@ export const HomeScreen = () => {
               anotaciones: res.anotaciones?.map((a) =>
                 a.content === content && a.id.startsWith('temp-')
                   ? newAnnotation
-                  : a
+                  : a,
               ),
             }
           }
           return res
-        })
+        }),
       )
     } else {
       // Revert if failed
@@ -475,7 +495,7 @@ export const HomeScreen = () => {
       current.map((res) => ({
         ...res,
         anotaciones: res.anotaciones?.filter((a) => a.id !== annotationId),
-      }))
+      })),
     )
 
     const success = await apiClient.deleteAnnotation(annotationId)
@@ -501,7 +521,9 @@ export const HomeScreen = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-100">
-      <View className={`flex-1 ${isLargeScreen ? 'max-w-[1600px] w-full mx-auto shadow-2xl bg-gray-50' : 'bg-gray-50'}`}>
+      <View
+        className={`flex-1 ${isLargeScreen ? 'max-w-[1600px] w-full mx-auto shadow-2xl bg-gray-50' : 'bg-gray-50'}`}
+      >
         {/* Header - Fixed */}
         <View className="px-5 py-4 flex-row justify-between items-center bg-white shadow-sm z-50">
           <View>
@@ -538,7 +560,9 @@ export const HomeScreen = () => {
                     renderArrow={(direction: string) => (
                       <Ionicons
                         name={
-                          direction === 'left' ? 'chevron-back' : 'chevron-forward'
+                          direction === 'left'
+                            ? 'chevron-back'
+                            : 'chevron-forward'
                         }
                         size={24}
                         color="#3B82F6"
@@ -571,8 +595,8 @@ export const HomeScreen = () => {
                   {/* Selected Date Info */}
                   <View className="mb-8">
                     <Text className="mb-4 text-xl font-bold text-gray-800 border-b border-gray-200 pb-2">
-                    {formatSafeDate(selectedDate, "EEEE d 'de' MMMM")}
-                  </Text>
+                      {formatSafeDate(selectedDate, "EEEE d 'de' MMMM")}
+                    </Text>
 
                     <View className="flex-row flex-wrap -mx-2">
                       {selectedDateReservations.length > 0 ? (
@@ -773,8 +797,12 @@ export const HomeScreen = () => {
         visible={editModalVisible}
         onRequestClose={() => setEditModalVisible(false)}
       >
-        <View className={`flex-1 bg-black/60 ${isLargeScreen ? 'justify-center items-center p-4' : 'justify-end'}`}>
-          <View className={`bg-white p-6 ${isLargeScreen ? 'rounded-3xl w-full max-w-2xl h-[90%]' : 'rounded-t-3xl h-[85%]'}`}>
+        <View
+          className={`flex-1 bg-black/60 ${isLargeScreen ? 'justify-center items-center p-4' : 'justify-end'}`}
+        >
+          <View
+            className={`bg-white p-6 ${isLargeScreen ? 'rounded-3xl w-full max-w-2xl h-[90%]' : 'rounded-t-3xl h-[85%]'}`}
+          >
             <View className="flex-row justify-between items-center mb-6">
               <Text className="text-2xl font-bold text-gray-900">
                 Editar Reserva
@@ -954,7 +982,11 @@ export const HomeScreen = () => {
                 </Text>
                 <View className="bg-gray-100 border border-gray-200 rounded-xl p-4">
                   <Text className="text-gray-800 text-lg font-bold">
-                    $ {(parseFloat(editForm.totalPrice || '0') - parseFloat(editForm.amountPaid || '0')).toFixed(2)}
+                    ${' '}
+                    {(
+                      parseFloat(editForm.totalPrice || '0') -
+                      parseFloat(editForm.amountPaid || '0')
+                    ).toFixed(2)}
                   </Text>
                 </View>
               </View>
@@ -1053,7 +1085,7 @@ export const HomeScreen = () => {
             </Text>
 
             <View className="flex-row gap-4 mb-6">
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setShowReportCalendar('start')}
                 className="flex-1"
               >
@@ -1061,26 +1093,26 @@ export const HomeScreen = () => {
                   Fecha Inicio
                 </Text>
                 <View className="bg-gray-50 border border-gray-200 rounded-xl p-4 flex-row justify-between items-center">
-                   <Text className="text-gray-800 font-medium">
-                     {formatSafeDate(reportStartDate, 'dd/MM/yyyy')}
-                   </Text>
-                   <Ionicons name="calendar" size={20} color="#3B82F6" />
-                 </View>
-               </TouchableOpacity>
- 
-               <TouchableOpacity 
-                 onPress={() => setShowReportCalendar('end')}
-                 className="flex-1"
-               >
-                 <Text className="text-sm font-semibold text-gray-700 mb-2">
-                   Fecha Fin
-                 </Text>
-                 <View className="bg-gray-50 border border-gray-200 rounded-xl p-4 flex-row justify-between items-center">
-                   <Text className="text-gray-800 font-medium">
-                     {formatSafeDate(reportEndDate, 'dd/MM/yyyy')}
-                   </Text>
-                   <Ionicons name="calendar" size={20} color="#3B82F6" />
-                 </View>
+                  <Text className="text-gray-800 font-medium">
+                    {formatSafeDate(reportStartDate, 'dd/MM/yyyy')}
+                  </Text>
+                  <Ionicons name="calendar" size={20} color="#3B82F6" />
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => setShowReportCalendar('end')}
+                className="flex-1"
+              >
+                <Text className="text-sm font-semibold text-gray-700 mb-2">
+                  Fecha Fin
+                </Text>
+                <View className="bg-gray-50 border border-gray-200 rounded-xl p-4 flex-row justify-between items-center">
+                  <Text className="text-gray-800 font-medium">
+                    {formatSafeDate(reportEndDate, 'dd/MM/yyyy')}
+                  </Text>
+                  <Ionicons name="calendar" size={20} color="#3B82F6" />
+                </View>
               </TouchableOpacity>
             </View>
 
@@ -1096,7 +1128,9 @@ export const HomeScreen = () => {
                     setShowReportCalendar(null)
                   }}
                   markedDates={{
-                    [showReportCalendar === 'start' ? reportStartDate : reportEndDate]: {
+                    [showReportCalendar === 'start'
+                      ? reportStartDate
+                      : reportEndDate]: {
                       selected: true,
                       disableTouchEvent: true,
                       selectedColor: '#3B82F6',

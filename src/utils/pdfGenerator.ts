@@ -8,7 +8,7 @@ import { Platform } from 'react-native'
 export const generateBookingCommissionReport = async (
   reservations: Reservation[],
   startDate: string,
-  endDate: string
+  endDate: string,
 ) => {
   const filteredReservations = reservations.filter((res) => {
     return res.startDate >= startDate && res.startDate <= endDate
@@ -19,41 +19,44 @@ export const generateBookingCommissionReport = async (
   let totalAbonado = 0
   let totalPendiente = 0
 
-  const rows = filteredReservations.length > 0 
-    ? filteredReservations
-        .map((res) => {
-          const commission = res.bookingCommission || 0
-          const isPaid = res.bookingCommissionStatus === 'pagado'
-          const abono = res.amountPaid || 0
-          const pendiente = res.totalPrice - abono
-          
-          if (!isPaid) {
-            totalComisionesPorPagar += commission
-          }
-          totalHospedaje += res.totalPrice
-          totalAbonado += abono
-          totalPendiente += pendiente
+  const rows =
+    filteredReservations.length > 0
+      ? filteredReservations
+          .map((res) => {
+            const subtotal = res.totalPrice
+            const totalRoom = subtotal * 1.2
+            const commissionForReport = subtotal * 0.15
+            const isPaid = res.bookingCommissionStatus === 'pagado'
+            const abono = res.amountPaid || 0
+            const pendiente = totalRoom - abono
 
-          return `
+            if (!isPaid) {
+              totalComisionesPorPagar += commissionForReport
+            }
+            totalHospedaje += totalRoom
+            totalAbonado += abono
+            totalPendiente += pendiente
+
+            return `
           <tr>
             <td>${res.room}</td>
             <td>${format(parseISO(res.startDate), 'dd/MM/yyyy')} - ${format(parseISO(res.endDate), 'dd/MM/yyyy')}</td>
             <td>${res.name}</td>
             <td style="text-align: center;">${res.peopleCount}</td>
-            <td style="text-align: right;">$${res.totalPrice.toFixed(2)}</td>
+            <td style="text-align: right;">$${totalRoom.toFixed(2)}</td>
             <td style="text-align: right;">$${abono.toFixed(2)}</td>
             <td style="text-align: right; color: ${pendiente > 0 ? 'red' : 'black'}; font-weight: ${pendiente > 0 ? 'bold' : 'normal'};">
               $${pendiente.toFixed(2)}
             </td>
-            <td style="text-align: right;">$${commission.toFixed(2)}</td>
+            <td style="text-align: right;">$${commissionForReport.toFixed(2)}</td>
             <td style="text-align: center; color: ${isPaid ? 'green' : 'red'};">
               ${isPaid ? 'Pagado' : 'Pendiente'}
             </td>
           </tr>
         `
-        })
-        .join('')
-    : '<tr><td colspan="9" style="text-align: center; padding: 20px; color: #6B7280;">No hay reservas registradas en este periodo.</td></tr>'
+          })
+          .join('')
+      : '<tr><td colspan="9" style="text-align: center; padding: 20px; color: #6B7280;">No hay reservas registradas en este periodo.</td></tr>'
 
   const html = `
     <html>
@@ -143,7 +146,10 @@ export const generateBookingCommissionReport = async (
       }
     } else {
       const { uri } = await Print.printToFileAsync({ html })
-      await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' })
+      await Sharing.shareAsync(uri, {
+        UTI: '.pdf',
+        mimeType: 'application/pdf',
+      })
     }
   } catch (error) {
     console.error('Error generating PDF:', error)

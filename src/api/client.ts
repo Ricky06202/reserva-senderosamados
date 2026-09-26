@@ -1,7 +1,7 @@
 import { ApiReservation, ApiRoom, ApiStatus } from './types'
 import { Annotation, Reservation } from '../data/reservations'
 
-const API_URL = 'https://api-reservas-senderosamados.rsanjur.com'
+const API_URL = 'https://api.reservas.senderosamados.rsanjur.com'
 
 export const apiClient = {
   getReservations: async (): Promise<Reservation[]> => {

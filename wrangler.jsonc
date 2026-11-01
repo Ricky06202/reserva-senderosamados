@@ -1,8 +1,13 @@
 {
-  // Worker de solo-assets para Cloudflare (expo export web genera dist/)
-  "name": "reserva-senderosamados",
-  "compatibility_date": "2026-09-01",
-  "assets": {
-    "directory": "./dist"
-  }
+	// SvelteKit genera la PWA estática en build/.
+	"name": "reserva-senderosamados",
+	"compatibility_date": "2026-09-01",
+	"workers_dev": false,
+	"routes": [
+		{ "pattern": "reservas.senderosamados.rsanjur.com/*", "zone_name": "rsanjur.com" }
+	],
+	"assets": {
+		"directory": "./build",
+		"not_found_handling": "single-page-application"
+	}
 }

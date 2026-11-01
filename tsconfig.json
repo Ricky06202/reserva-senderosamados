@@ -1,6 +1,16 @@
 {
-  "extends": "expo/tsconfig.base",
-  "compilerOptions": {
-    "strict": true
-  }
+	"extends": "$app/tsconfig",
+	"compilerOptions": {
+		"strict": true,
+		"allowJs": true,
+		"checkJs": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"resolveJsonModule": true,
+		"skipLibCheck": true,
+		"sourceMap": true,
+		"moduleResolution": "bundler"
+	},
+	"include": ["src", "vite.config.ts"],
+	"exclude": ["src/service-worker", "src/service-worker.ts", ".svelte-kit/**", "node_modules/**"]
 }

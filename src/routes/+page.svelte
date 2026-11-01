@@ -45,6 +45,8 @@
 	let statuses = $state<ApiStatus[]>([])
 	let calendarSettings = $state<CalendarRoomSettings[]>([])
 	let loading = $state(true)
+	let sessionReady = $state(false)
+	let accessIssue = $state<'signed-out' | 'unauthorized' | null>(null)
 	let savingCalendar = $state('')
 	let syncingCalendar = $state('')
 	let settingsLoaded = $state(false)
@@ -128,6 +130,8 @@
 			reservations = previewReservations()
 			rooms = previewRooms
 			statuses = previewStatuses
+			sessionReady = true
+			accessIssue = null
 			loading = false
 			loadError = ''
 			return
@@ -144,12 +148,19 @@
 			reservations = nextReservations
 			rooms = nextRooms
 			statuses = nextStatuses
+			sessionReady = true
+			accessIssue = null
 		} catch (error) {
 			if (error instanceof ApiError && error.status === 401) {
+				sessionReady = false
+				accessIssue = 'signed-out'
 				loadError = 'Inicia sesión con RS ID para consultar las reservas.'
 			} else if (error instanceof ApiError && error.status === 403) {
+				sessionReady = false
+				accessIssue = 'unauthorized'
 				loadError = 'Esta cuenta de RS ID todavía no está autorizada para esta app.'
 			} else {
+				accessIssue = null
 				loadError = error instanceof Error ? error.message : 'No se pudieron cargar las reservas.'
 			}
 		} finally {
@@ -163,7 +174,17 @@
 			calendarSettings = await api.getCalendarSettings()
 			settingsLoaded = true
 		} catch (error) {
-			loadError = error instanceof Error ? error.message : 'No se pudo cargar la configuración de calendarios.'
+			if (error instanceof ApiError && error.status === 401) {
+				sessionReady = false
+				accessIssue = 'signed-out'
+				loadError = 'Inicia sesión con RS ID para continuar.'
+			} else if (error instanceof ApiError && error.status === 403) {
+				sessionReady = false
+				accessIssue = 'unauthorized'
+				loadError = 'Esta cuenta de RS ID todavía no está autorizada para esta app.'
+			} else {
+				loadError = error instanceof Error ? error.message : 'No se pudo cargar la configuración de calendarios.'
+			}
 		}
 	}
 
@@ -456,9 +477,11 @@
 				<h1 class="page-heading">Reservas</h1>
 				<p class="intro-copy">Fechas claras para que el equipo esté en la misma página.</p>
 			</div>
-			<button class="button button-primary new-reservation" type="button" onclick={() => openNewReservation()} disabled={loading || rooms.length === 0}>
-				<Plus size={18} aria-hidden="true" /> Nueva reserva
-			</button>
+			{#if !loading && (sessionReady || isPreviewMode)}
+				<button class="button button-primary new-reservation" type="button" onclick={() => openNewReservation()} disabled={rooms.length === 0}>
+					<Plus size={18} aria-hidden="true" /> Nueva reserva
+				</button>
+			{/if}
 		</section>
 
 		{#if notice}
@@ -467,7 +490,7 @@
 				<button class="dismiss-notice" type="button" aria-label="Cerrar aviso" onclick={() => (notice = '')}>×</button>
 			</div>
 		{/if}
-		{#if loadError}
+		{#if loadError && !(accessIssue && !sessionReady && !isPreviewMode)}
 			<div class="notice notice-error alert" role="alert">
 				<CircleAlert size={18} aria-hidden="true" /><span>{loadError}</span>
 				{#if !isPreviewMode && !loadError.includes('RS ID')}
@@ -482,20 +505,22 @@
 			</div>
 		{/if}
 
-		<nav class="section-nav" aria-label="Secciones de reservas">
-			<button class:active={activeTab === 'calendar'} type="button" aria-current={activeTab === 'calendar' ? 'page' : undefined} onclick={() => switchTab('calendar')}>
-				<CalendarDays size={17} aria-hidden="true" /><span>Calendario</span>
-			</button>
-			<button class:active={activeTab === 'list'} type="button" aria-current={activeTab === 'list' ? 'page' : undefined} onclick={() => switchTab('list')}>
-				<List size={17} aria-hidden="true" /><span>Reservas</span>
-			</button>
-			<button class:active={activeTab === 'reports'} type="button" aria-current={activeTab === 'reports' ? 'page' : undefined} onclick={() => switchTab('reports')}>
-				<FileText size={17} aria-hidden="true" /><span>Informe</span>
-			</button>
-			<button class:active={activeTab === 'settings'} type="button" aria-current={activeTab === 'settings' ? 'page' : undefined} onclick={() => switchTab('settings')}>
-				<Settings size={17} aria-hidden="true" /><span>Ajustes</span>
-			</button>
-		</nav>
+		{#if !loading && (sessionReady || isPreviewMode)}
+			<nav class="section-nav" aria-label="Secciones de reservas">
+				<button class:active={activeTab === 'calendar'} type="button" aria-current={activeTab === 'calendar' ? 'page' : undefined} onclick={() => switchTab('calendar')}>
+					<CalendarDays size={17} aria-hidden="true" /><span>Calendario</span>
+				</button>
+				<button class:active={activeTab === 'list'} type="button" aria-current={activeTab === 'list' ? 'page' : undefined} onclick={() => switchTab('list')}>
+					<List size={17} aria-hidden="true" /><span>Reservas</span>
+				</button>
+				<button class:active={activeTab === 'reports'} type="button" aria-current={activeTab === 'reports' ? 'page' : undefined} onclick={() => switchTab('reports')}>
+					<FileText size={17} aria-hidden="true" /><span>Informe</span>
+				</button>
+				<button class:active={activeTab === 'settings'} type="button" aria-current={activeTab === 'settings' ? 'page' : undefined} onclick={() => switchTab('settings')}>
+					<Settings size={17} aria-hidden="true" /><span>Ajustes</span>
+				</button>
+			</nav>
+		{/if}
 
 		{#if loading}
 			<section class="loading-panel card" aria-live="polite">
@@ -504,15 +529,19 @@
 				<span>Un momento, por favor.</span>
 			</section>
 		{/if}
-		{#if !loading && loadError && !reservations.length && !isPreviewMode}
+		{#if !loading && accessIssue && !sessionReady && !isPreviewMode}
 			<section class="login-panel card">
 				<div class="login-icon"><House size={23} aria-hidden="true" /></div>
-				<h2>{loadError.includes('autorizada') ? 'Acceso familiar' : 'Entra con RS ID'}</h2>
+				<h2>{accessIssue === 'unauthorized' ? 'Acceso familiar' : 'Entra con RS ID'}</h2>
 				<p>{loadError}</p>
-				<div class="login-tip">Usa una cuenta familiar autorizada. Si acabas de entrar, recarga esta página.</div>
+				<div class="login-tip">
+					{accessIssue === 'unauthorized'
+						? 'Usa una cuenta familiar autorizada. Si debería tener acceso, verifica el correo de RS ID.'
+						: 'Toca «Entrar» arriba para iniciar sesión con RS ID. Si acabas de entrar, recarga esta página.'}
+				</div>
 			</section>
 		{/if}
-		{#if !loading && (!loadError || reservations.length > 0 || isPreviewMode) && activeTab === 'calendar'}
+		{#if !loading && (sessionReady || isPreviewMode) && activeTab === 'calendar'}
 			<div class="filter-row">
 				<label for="calendar-room-filter">Ver alojamiento</label>
 				<select id="calendar-room-filter" bind:value={roomFilter}>
@@ -580,7 +609,7 @@
 				{/if}
 			</section>
 		{/if}
-		{#if !loading && (!loadError || reservations.length > 0 || isPreviewMode) && activeTab === 'list'}
+		{#if !loading && (sessionReady || isPreviewMode) && activeTab === 'list'}
 			<section class="list-view">
 				<div class="section-heading list-heading">
 					<div><p class="eyebrow">Registro completo</p><h2>Reservas</h2></div>
@@ -602,7 +631,7 @@
 				{/if}
 			</section>
 		{/if}
-		{#if !loading && (!loadError || reservations.length > 0 || isPreviewMode) && activeTab === 'reports'}
+		{#if !loading && (sessionReady || isPreviewMode) && activeTab === 'reports'}
 			<section class="report-screen">
 				<header class="section-heading report-toolbar">
 					<div><p class="eyebrow">Resumen del periodo</p><h2>Informe de reservas</h2></div>
@@ -651,7 +680,7 @@
 				</div>
 			</section>
 		{/if}
-			<section class="settings-view" class:hidden={activeTab !== 'settings' || loading || (Boolean(loadError) && !reservations.length && !isPreviewMode)}>
+		<section class="settings-view" class:hidden={activeTab !== 'settings' || loading || (!sessionReady && !isPreviewMode)}>
 				<header class="section-heading"><div><p class="eyebrow">Este dispositivo</p><h2>Ajustes</h2></div></header>
 				<div class="settings-grid">
 					<section class="settings-card card">

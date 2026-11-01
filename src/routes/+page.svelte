@@ -784,12 +784,14 @@
 	</div>
 {/if}
 
-<nav class="mobile-nav" aria-label="Navegación de la app">
-	<button class:active={activeTab === 'calendar'} type="button" onclick={() => switchTab('calendar')}><CalendarDays size={19} aria-hidden="true" /><span>Calendario</span></button>
-	<button class:active={activeTab === 'list'} type="button" onclick={() => switchTab('list')}><List size={19} aria-hidden="true" /><span>Reservas</span></button>
-	<button class:active={activeTab === 'reports'} type="button" onclick={() => switchTab('reports')}><FileText size={19} aria-hidden="true" /><span>Informe</span></button>
-	<button class:active={activeTab === 'settings'} type="button" onclick={() => switchTab('settings')}><Settings size={19} aria-hidden="true" /><span>Ajustes</span></button>
-</nav>
+{#if !loading && (sessionReady || isPreviewMode)}
+	<nav class="mobile-nav" aria-label="Navegación de la app">
+		<button class:active={activeTab === 'calendar'} type="button" onclick={() => switchTab('calendar')}><CalendarDays size={19} aria-hidden="true" /><span>Calendario</span></button>
+		<button class:active={activeTab === 'list'} type="button" onclick={() => switchTab('list')}><List size={19} aria-hidden="true" /><span>Reservas</span></button>
+		<button class:active={activeTab === 'reports'} type="button" onclick={() => switchTab('reports')}><FileText size={19} aria-hidden="true" /><span>Informe</span></button>
+		<button class:active={activeTab === 'settings'} type="button" onclick={() => switchTab('settings')}><Settings size={19} aria-hidden="true" /><span>Ajustes</span></button>
+	</nav>
+{/if}
 
 <style>
 	.page-intro,

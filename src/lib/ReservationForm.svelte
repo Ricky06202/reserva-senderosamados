@@ -188,21 +188,25 @@
 					</select>
 				</div>
 
-				<div class="field">
-					<label for="reservation-arrival">Entrada</label>
-					<input id="reservation-arrival" type="date" bind:value={form.startDate} min={reservation ? undefined : todayKey()} required />
+				<div class="field-pair span-all">
+					<div class="field">
+						<label for="reservation-arrival">Fecha de entrada</label>
+						<input id="reservation-arrival" type="date" bind:value={form.startDate} min={reservation ? undefined : todayKey()} required />
+					</div>
+					<div class="field">
+						<label for="reservation-check-in-time">Hora de entrada</label>
+						<input id="reservation-check-in-time" type="time" step="60" bind:value={form.checkInTime} required />
+					</div>
 				</div>
-				<div class="field">
-					<label for="reservation-departure">Salida</label>
-					<input id="reservation-departure" type="date" bind:value={form.endDate} min={nextDate} required />
-				</div>
-				<div class="field">
-					<label for="reservation-check-in-time">Hora de entrada</label>
-					<input id="reservation-check-in-time" type="time" step="60" bind:value={form.checkInTime} required />
-				</div>
-				<div class="field">
-					<label for="reservation-check-out-time">Hora de salida</label>
-					<input id="reservation-check-out-time" type="time" step="60" bind:value={form.checkOutTime} required />
+				<div class="field-pair span-all">
+					<div class="field">
+						<label for="reservation-departure">Fecha de salida</label>
+						<input id="reservation-departure" type="date" bind:value={form.endDate} min={nextDate} required />
+					</div>
+					<div class="field">
+						<label for="reservation-check-out-time">Hora de salida</label>
+						<input id="reservation-check-out-time" type="time" step="60" bind:value={form.checkOutTime} required />
+					</div>
 				</div>
 
 				<div class="field span-all">
@@ -310,6 +314,17 @@
 		gap: 15px 13px;
 	}
 
+	.field-pair {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 12px;
+		min-width: 0;
+	}
+
+	.field-pair .field {
+		min-width: 0;
+	}
+
 	.span-all {
 		grid-column: 1 / -1;
 	}
@@ -384,6 +399,13 @@
 
 		.span-all {
 			grid-column: auto;
+		}
+	}
+
+	@media (max-width: 360px) {
+		.field-pair {
+			grid-template-columns: minmax(0, 1fr);
+			gap: 15px;
 		}
 	}
 </style>

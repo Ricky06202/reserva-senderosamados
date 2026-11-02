@@ -5,16 +5,18 @@
 	import { dateKey, todayKey } from './dates'
 	import type { ApiRoom, ApiStatus, Reservation, ReservationDraft } from './types'
 
+	type NumericField = string | number | null
+
 	interface FormState {
 		name: string
 		roomId: string
-		peopleCount: string
+		peopleCount: NumericField
 		startDate: string
 		endDate: string
-		totalPrice: string
-		amountPaid: string
+		totalPrice: NumericField
+		amountPaid: NumericField
 		isPaid: boolean
-		bookingCommission: string
+		bookingCommission: NumericField
 		isCommissionPaid: boolean
 	}
 
@@ -53,6 +55,10 @@
 		}
 	}
 
+	function inputText(value: NumericField): string {
+		return value === null ? '' : String(value)
+	}
+
 	onMount(() => {
 		if (!dialog.open) dialog.showModal()
 	})
@@ -78,10 +84,14 @@
 
 		const name = form.name.trim()
 		const roomId = Number(form.roomId)
-		const peopleCount = form.peopleCount.trim() ? Number(form.peopleCount) : 0
-		const totalPrice = form.totalPrice.trim() ? Number(form.totalPrice) : null
-		const amountPaid = form.amountPaid.trim() ? Number(form.amountPaid) : 0
-		const bookingCommission = form.bookingCommission.trim() ? Number(form.bookingCommission) : 0
+		const peopleCountValue = inputText(form.peopleCount)
+		const totalPriceValue = inputText(form.totalPrice)
+		const amountPaidValue = inputText(form.amountPaid)
+		const bookingCommissionValue = inputText(form.bookingCommission)
+		const peopleCount = peopleCountValue.trim() ? Number(peopleCountValue) : 0
+		const totalPrice = totalPriceValue.trim() ? Number(totalPriceValue) : null
+		const amountPaid = amountPaidValue.trim() ? Number(amountPaidValue) : 0
+		const bookingCommission = bookingCommissionValue.trim() ? Number(bookingCommissionValue) : 0
 
 		if (!name || !Number.isInteger(roomId) || roomId < 1) {
 			errorMessage = 'Escribe el nombre y selecciona el alojamiento.'
@@ -189,7 +199,7 @@
 					<small>La reserva se puede guardar aunque todavía no hayan acordado el precio.</small>
 				</div>
 
-				{#if form.totalPrice.trim()}
+				{#if inputText(form.totalPrice).trim()}
 					<div class="field">
 						<label for="reservation-paid">Abono recibido</label>
 						<input id="reservation-paid" type="number" min="0" step="0.01" bind:value={form.amountPaid} placeholder="0.00" inputmode="decimal" />

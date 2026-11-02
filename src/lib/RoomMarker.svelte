@@ -6,9 +6,10 @@
 		size?: number
 		arrival?: boolean
 		departure?: boolean
+		lightOnDark?: boolean
 	}
 
-	let { roomId, size = 14, arrival = false, departure = false }: Props = $props()
+	let { roomId, size = 14, arrival = false, departure = false, lightOnDark = false }: Props = $props()
 
 	function shapeClass(): string {
 		if (roomId === 1) return 'room-one'
@@ -20,6 +21,7 @@
 
 <span
 	class="room-marker-wrap"
+	class:light-on-dark={lightOnDark}
 	style={`--marker-size: ${size}px`}
 	aria-hidden="true"
 >
@@ -142,10 +144,18 @@
 	}
 
 	.event-arrow-outline {
-		color: #23362b;
+		color: #fff;
 	}
 
 	.event-arrow-ink {
+		color: #23362b;
+	}
+
+	.room-marker-wrap.light-on-dark .event-arrow-outline {
+		color: #23362b;
+	}
+
+	.room-marker-wrap.light-on-dark .event-arrow-ink {
 		color: #fff;
 	}
 </style>

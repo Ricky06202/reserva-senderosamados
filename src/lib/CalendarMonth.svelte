@@ -108,6 +108,7 @@
 								size={13}
 								arrival={arrivals.some((reservation) => reservation.roomId === roomId)}
 								departure={departures.some((reservation) => reservation.roomId === roomId)}
+								lightOnDark={selectedDate === key}
 							/>
 						{/each}
 					</span>

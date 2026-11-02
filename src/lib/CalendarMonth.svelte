@@ -226,17 +226,29 @@
 
 	.room-dot,
 	.legend-mark {
+		position: relative;
 		display: inline-block;
 		flex: 0 0 auto;
-		width: 9px;
-		height: 9px;
-		border: 1px solid #fff;
-		box-shadow: 0 0 0 1px #34443a;
+		width: 12px;
+		height: 12px;
+		background: #fff;
+		filter: drop-shadow(0 0 1px #23362b);
+	}
+
+	.room-dot::after,
+	.legend-mark::after {
+		position: absolute;
+		inset: 2px;
 		background: var(--room-color, var(--forest));
+		content: '';
 	}
 
 	.room-one {
 		--room-color: #19743a;
+		border-radius: 50%;
+	}
+
+	.room-one::after {
 		border-radius: 50%;
 	}
 
@@ -245,14 +257,26 @@
 		clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
 	}
 
+	.room-two::after {
+		clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+	}
+
 	.room-three {
 		--room-color: #225da8;
+		clip-path: polygon(50% 0, 100% 100%, 0 100%);
+	}
+
+	.room-three::after {
 		clip-path: polygon(50% 0, 100% 100%, 0 100%);
 	}
 
 	.room-other {
 		--room-color: #665d12;
 		border-radius: 2px;
+	}
+
+	.room-other::after {
+		border-radius: 1px;
 	}
 
 	.calendar-legend {
@@ -273,8 +297,8 @@
 	}
 
 	.legend-mark {
-		width: 12px;
-		height: 12px;
+		width: 14px;
+		height: 14px;
 	}
 
 	@media (max-width: 640px) {

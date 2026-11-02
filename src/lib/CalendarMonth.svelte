@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ChevronLeft, ChevronRight } from 'lucide-svelte'
+	import { ChevronLeft, ChevronRight, LogOut } from 'lucide-svelte'
 	import {
 		calendarDays,
 		dateKey,
@@ -10,6 +10,7 @@
 		weekdays
 	} from './dates'
 	import type { Reservation } from './types'
+	import RoomMarker from './RoomMarker.svelte'
 
 	interface Props {
 		cursor: Date
@@ -36,18 +37,19 @@
 	const weekdayLabels = weekdays()
 	const today = todayKey()
 
-	function roomMarkerClass(roomId: number | null): string {
-		if (roomId === 1) return 'room-one'
-		if (roomId === 2) return 'room-two'
-		if (roomId === 3) return 'room-three'
-		return 'room-other'
-	}
-
 	function dayReservations(day: Date): Reservation[] {
 		const key = dateKey(day)
 		return reservations.filter((reservation) => {
 			if (roomFilter !== 'all' && String(reservation.roomId) !== roomFilter) return false
 			return key >= reservation.startDate && key < reservation.endDate
+		})
+	}
+
+	function dayDepartures(day: Date): Reservation[] {
+		const key = dateKey(day)
+		return reservations.filter((reservation) => {
+			if (roomFilter !== 'all' && String(reservation.roomId) !== roomFilter) return false
+			return reservation.endDate === key
 		})
 	}
 </script>
@@ -78,34 +80,40 @@
 		{#each days as day (dateKey(day))}
 			{@const key = dateKey(day)}
 			{@const occupied = dayReservations(day)}
+			{@const departures = dayDepartures(day)}
+			{@const roomIds = [...new Set([...occupied, ...departures].map((reservation) => reservation.roomId))].slice(0, 3)}
+			{@const summary = [
+				occupied.length ? `${occupied.length} reserva${occupied.length === 1 ? '' : 's'}` : '',
+				departures.length ? `${departures.length} salida${departures.length === 1 ? '' : 's'}` : ''
+			].filter(Boolean).join(', ')}
 			<button
 				class="day-cell"
 				class:outside={!isSameMonth(day, cursor)}
 				class:selected={selectedDate === key}
 				class:today={today === key}
-				class:has-reservations={occupied.length > 0}
+				class:has-reservations={occupied.length > 0 || departures.length > 0}
 				type="button"
 				aria-pressed={selectedDate === key}
-				aria-label={`${formatLongDate(key)}${occupied.length ? `, ${occupied.length} reserva${occupied.length === 1 ? '' : 's'}` : ', sin reservas'}`}
+				aria-label={`${formatLongDate(key)}${summary ? `, ${summary}` : ', sin reservas'}`}
 				onclick={() => onSelectDate(key)}
 			>
 				<span class="day-number">{day.getDate()}</span>
-				{#if occupied.length > 0}
+				{#if roomIds.length > 0}
 					<span class="day-indicators" aria-hidden="true">
-						{#each [...new Set(occupied.map((reservation) => reservation.roomId))].slice(0, 3) as roomId (roomId)}
-							<span class={`room-dot ${roomMarkerClass(roomId)}`}></span>
+						{#each roomIds as roomId (roomId ?? 'other')}
+							<RoomMarker {roomId} size={13} departure={departures.some((reservation) => reservation.roomId === roomId)} />
 						{/each}
 					</span>
-					<span class="sr-only">{occupied.length} reserva{occupied.length === 1 ? '' : 's'}</span>
 				{/if}
 			</button>
 		{/each}
 	</div>
 
-	<footer class="calendar-legend" aria-label="Leyenda de alojamientos">
-		<span><i class="legend-mark room-one" aria-hidden="true"></i>Casa 1</span>
-		<span><i class="legend-mark room-two" aria-hidden="true"></i>Casa 2</span>
-		<span><i class="legend-mark room-three" aria-hidden="true"></i>Casa 3</span>
+	<footer class="calendar-legend" aria-label="Leyenda de alojamientos y salidas">
+		<span><RoomMarker roomId={1} size={14} />Casa 1</span>
+		<span><RoomMarker roomId={2} size={14} />Casa 2</span>
+		<span><RoomMarker roomId={3} size={14} />Casa 3</span>
+		<span><LogOut size={14} aria-hidden="true" />Salida</span>
 	</footer>
 </section>
 
@@ -218,76 +226,10 @@
 
 	.day-indicators {
 		display: flex;
-		min-height: 12px;
+		min-height: 13px;
 		align-items: center;
 		justify-content: center;
-		gap: 4px;
-	}
-
-	.room-dot,
-	.legend-mark {
-		position: relative;
-		display: inline-block;
-		flex: 0 0 auto;
-		width: 12px;
-		height: 12px;
-		background: transparent;
-		filter: drop-shadow(0 0 1px #23362b);
-	}
-
-	.room-dot::before,
-	.legend-mark::before {
-		position: absolute;
-		inset: 0;
-		background: #fff;
-		content: '';
-	}
-
-	.room-dot::after,
-	.legend-mark::after {
-		position: absolute;
-		inset: 2px;
-		background: var(--room-color, var(--forest));
-		content: '';
-	}
-
-	.room-one {
-		--room-color: #19743a;
-	}
-
-	.room-one::before,
-	.room-one::after {
-		border-radius: 50%;
-	}
-
-	.room-two {
-		--room-color: #a64b00;
-	}
-
-	.room-two::before,
-	.room-two::after {
-		clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
-	}
-
-	.room-three {
-		--room-color: #225da8;
-	}
-
-	.room-three::before,
-	.room-three::after {
-		clip-path: polygon(50% 0, 100% 100%, 0 100%);
-	}
-
-	.room-other {
-		--room-color: #665d12;
-	}
-
-	.room-other::before {
-		border-radius: 2px;
-	}
-
-	.room-other::after {
-		border-radius: 1px;
+		gap: 2px;
 	}
 
 	.calendar-legend {
@@ -305,11 +247,6 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 6px;
-	}
-
-	.legend-mark {
-		width: 14px;
-		height: 14px;
 	}
 
 	@media (max-width: 640px) {

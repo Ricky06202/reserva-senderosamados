@@ -20,6 +20,7 @@
 	import CalendarMonth from '../lib/CalendarMonth.svelte'
 	import ReservationCard from '../lib/ReservationCard.svelte'
 	import ReservationForm from '../lib/ReservationForm.svelte'
+	import RoomMarker from '../lib/RoomMarker.svelte'
 	import { ApiError, api } from '../lib/api'
 	import { addMonth, formatDate, previousMonth, todayKey } from '../lib/dates'
 	import { previewReservations, previewRooms, previewStatuses } from '../lib/mock'
@@ -80,6 +81,15 @@
 			.filter((reservation) => {
 				if (roomFilter !== 'all' && String(reservation.roomId) !== roomFilter) return false
 				return selectedDate >= reservation.startDate && selectedDate < reservation.endDate
+			})
+			.sort((a, b) => a.startDate.localeCompare(b.startDate))
+	)
+
+	const selectedDepartures = $derived.by(() =>
+		reservations
+			.filter((reservation) => {
+				if (roomFilter !== 'all' && String(reservation.roomId) !== roomFilter) return false
+				return reservation.endDate === selectedDate
 			})
 			.sort((a, b) => a.startDate.localeCompare(b.startDate))
 	)
@@ -648,12 +658,19 @@
 							<Plus size={19} aria-hidden="true" />
 						</button>
 					</header>
-					{#if selectedReservations.length}
+					{#if selectedReservations.length || selectedDepartures.length}
 						<div class="day-reservations">
 							{#each selectedReservations as reservation (reservation.id)}
 								<button class="day-reservation" type="button" onclick={() => openEditReservation(reservation)}>
-									<span class="day-reservation-dot" class:from-booking={reservation.origin === 'booking'} class:from-airbnb={reservation.origin === 'airbnb'}></span>
+									<RoomMarker roomId={reservation.roomId} size={15} />
 									<span class="day-reservation-copy"><strong>{reservation.name}</strong><small>{reservation.room} · {formatDate(reservation.startDate)}–{formatDate(reservation.endDate)}</small></span>
+									<ChevronRight size={17} aria-hidden="true" />
+								</button>
+							{/each}
+							{#each selectedDepartures as reservation (reservation.id)}
+								<button class="day-reservation" type="button" onclick={() => openEditReservation(reservation)}>
+									<RoomMarker roomId={reservation.roomId} size={15} departure />
+									<span class="day-reservation-copy"><strong>{reservation.name}</strong><small>Salida · {reservation.room} · {formatDate(reservation.startDate)}–{formatDate(reservation.endDate)}</small></span>
 									<ChevronRight size={17} aria-hidden="true" />
 								</button>
 							{/each}
@@ -1124,22 +1141,6 @@
 	.day-reservation:hover {
 		border-color: #c9dac8;
 		background: #f8faf7;
-	}
-
-	.day-reservation-dot {
-		width: 9px;
-		height: 9px;
-		flex: 0 0 9px;
-		border-radius: 50%;
-		background: #477b54;
-	}
-
-	.day-reservation-dot.from-booking {
-		background: var(--sun);
-	}
-
-	.day-reservation-dot.from-airbnb {
-		background: #ba5c56;
 	}
 
 	.day-reservation-copy {

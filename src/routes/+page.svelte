@@ -27,6 +27,7 @@
 	import type { ApiRoom, ApiStatus, CalendarRoomSettings, Reservation, ReservationDraft } from '../lib/types'
 
 	type Tab = 'calendar' | 'list' | 'reports' | 'settings'
+	type CalendarFeedback = { kind: 'pending' | 'success' | 'error'; message: string }
 	type InstallPromptEvent = Event & {
 		prompt: () => Promise<void>
 		userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>
@@ -69,6 +70,7 @@
 	let installMessage = $state('')
 	let isInstalled = $state(false)
 	let calendarDrafts = $state<Record<string, string>>({})
+	let calendarFeedback = $state<Record<string, CalendarFeedback>>({})
 	let reportStart = $state(`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-01`)
 	let reportEnd = $state(todayKey())
 
@@ -353,24 +355,29 @@
 		const key = `${roomId}:${source}`
 		const url = calendarDrafts[key]?.trim() ?? ''
 		if (!isPreviewMode && !url) {
-			loadError = 'Pega el enlace iCal para guardar.'
+			const message = 'Pega el enlace iCal para guardar.'
+			calendarFeedback[key] = { kind: 'error', message }
+			loadError = message
 			return
 		}
 		savingCalendar = key
+		calendarFeedback[key] = { kind: 'pending', message: 'Guardando el enlace…' }
 		loadError = ''
 		let sourceSaved = false
 		try {
 			if (!isPreviewMode) {
 				await api.saveCalendarSource(roomId, source, url)
 				sourceSaved = true
-					calendarDrafts[key] = ''
-					await api.syncCalendarSource(roomId, source)
-					await loadData()
+				calendarDrafts[key] = ''
+				await api.syncCalendarSource(roomId, source)
+				await loadData()
 				calendarSettings = await api.getCalendarSettings()
 				settingsLoaded = true
 			}
 			calendarDrafts[key] = ''
-				notice = `${source === 'booking' ? 'Booking' : 'Airbnb'} guardado y sincronizado.`
+			const message = `${source === 'booking' ? 'Booking' : 'Airbnb'} guardado y sincronizado.`
+			calendarFeedback[key] = { kind: 'success', message }
+			notice = message
 		} catch (error) {
 			if (sourceSaved) {
 				try {
@@ -380,7 +387,14 @@
 					// El error original explica qué paso no se pudo completar.
 				}
 			}
-			loadError = error instanceof Error ? error.message : 'No se pudo guardar el calendario.'
+			const errorMessage = error instanceof ApiError
+				? error.message
+				: 'No se pudo conectar con el servidor. Revisa la conexión e intenta otra vez.'
+			const message = sourceSaved
+				? `El enlace quedó guardado, pero no se pudo sincronizar: ${errorMessage}`
+				: errorMessage
+			calendarFeedback[key] = { kind: 'error', message }
+			loadError = message
 		} finally {
 			savingCalendar = ''
 		}
@@ -735,14 +749,16 @@
 								</div>
 								<div class="source-grid">
 									{#each calendarSources as source (source.key)}
+						{@const draftKey = calendarDraftKey(calendar.roomId, source.key)}
 										<div class="source-form">
 											<div class="source-title"><strong>{source.title}</strong><span class:connected={sourceStatus(calendar.roomId, source.key)?.configured}>{sourceStatus(calendar.roomId, source.key)?.configured ? 'Conectado' : 'Sin configurar'}</span></div>
 											<label class="sr-only" for={`source-${calendar.roomId}-${source.key}`}>Enlace iCal de {source.title} para {calendar.roomName}</label>
-											<input id={`source-${calendar.roomId}-${source.key}`} type="url" bind:value={calendarDrafts[calendarDraftKey(calendar.roomId, source.key)]} placeholder="Pega aquí el enlace iCal" autocomplete="off" inputmode="url" />
+							<input id={`source-${calendar.roomId}-${source.key}`} type="url" bind:value={calendarDrafts[draftKey]} oninput={() => { delete calendarFeedback[draftKey] }} placeholder="Pega aquí el enlace iCal" autocomplete="off" inputmode="url" />
 											<div class="source-actions">
-												<button class="button button-primary" type="button" disabled={savingCalendar === calendarDraftKey(calendar.roomId, source.key) || !calendarDrafts[calendarDraftKey(calendar.roomId, source.key)]?.trim()} onclick={() => void saveCalendar(calendar.roomId, source.key)}>{savingCalendar === calendarDraftKey(calendar.roomId, source.key) ? 'Guardando…' : 'Guardar enlace'}</button>
-												{#if sourceStatus(calendar.roomId, source.key)?.configured}<button class="text-button" type="button" disabled={syncingCalendar === calendarDraftKey(calendar.roomId, source.key)} onclick={() => void syncCalendar(calendar.roomId, source.key)}><RefreshCw size={15} aria-hidden="true" />{syncingCalendar === calendarDraftKey(calendar.roomId, source.key) ? 'Actualizando…' : 'Actualizar ahora'}</button>{/if}
+								<button class="button button-primary" type="button" disabled={savingCalendar === draftKey || !calendarDrafts[draftKey]?.trim()} onclick={() => void saveCalendar(calendar.roomId, source.key)}>{savingCalendar === draftKey ? 'Guardando…' : 'Guardar enlace'}</button>
+								{#if sourceStatus(calendar.roomId, source.key)?.configured}<button class="text-button" type="button" disabled={syncingCalendar === draftKey} onclick={() => void syncCalendar(calendar.roomId, source.key)}><RefreshCw size={15} aria-hidden="true" />{syncingCalendar === draftKey ? 'Actualizando…' : 'Actualizar ahora'}</button>{/if}
 											</div>
+							{#if calendarFeedback[draftKey]}<small class:source-feedback-error={calendarFeedback[draftKey].kind === 'error'} class:source-feedback-success={calendarFeedback[draftKey].kind === 'success'} role={calendarFeedback[draftKey].kind === 'error' ? 'alert' : 'status'} aria-live="polite">{calendarFeedback[draftKey].message}</small>{/if}
 											{#if sourceStatus(calendar.roomId, source.key)?.lastSyncedAt}<small>Última revisión: {new Date(sourceStatus(calendar.roomId, source.key)?.lastSyncedAt ?? '').toLocaleString('es-PA')}</small>{/if}
 											{#if sourceStatus(calendar.roomId, source.key)?.lastError}<small class="source-error">No se pudo leer el calendario. Revisa que el enlace siga activo.</small>{/if}
 										</div>
@@ -1511,6 +1527,14 @@
 
 	.source-form small.source-error {
 		color: var(--danger);
+	}
+
+	.source-form small.source-feedback-error {
+		color: var(--danger);
+	}
+
+	.source-form small.source-feedback-success {
+		color: #3d7046;
 	}
 
 	.settings-loading {

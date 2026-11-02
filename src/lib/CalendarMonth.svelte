@@ -231,8 +231,16 @@
 		flex: 0 0 auto;
 		width: 12px;
 		height: 12px;
-		background: #fff;
+		background: transparent;
 		filter: drop-shadow(0 0 1px #23362b);
+	}
+
+	.room-dot::before,
+	.legend-mark::before {
+		position: absolute;
+		inset: 0;
+		background: #fff;
+		content: '';
 	}
 
 	.room-dot::after,
@@ -245,33 +253,36 @@
 
 	.room-one {
 		--room-color: #19743a;
-		border-radius: 50%;
 	}
 
+	.room-one::before,
 	.room-one::after {
 		border-radius: 50%;
 	}
 
 	.room-two {
 		--room-color: #a64b00;
-		clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
 	}
 
+	.room-two::before,
 	.room-two::after {
 		clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
 	}
 
 	.room-three {
 		--room-color: #225da8;
-		clip-path: polygon(50% 0, 100% 100%, 0 100%);
 	}
 
+	.room-three::before,
 	.room-three::after {
 		clip-path: polygon(50% 0, 100% 100%, 0 100%);
 	}
 
 	.room-other {
 		--room-color: #665d12;
+	}
+
+	.room-other::before {
 		border-radius: 2px;
 	}
 

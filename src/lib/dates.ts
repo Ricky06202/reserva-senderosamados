@@ -68,7 +68,7 @@ export function monthLabel(cursor: Date): string {
 export function weekdays(): string[] {
 	const monday = startOfWeek(new Date(2026, 0, 5), { weekStartsOn: 1 })
 	return Array.from({ length: 7 }, (_, index) =>
-		format(addDays(monday, index), 'EEEEE', { locale: es })
+		format(addDays(monday, index), 'EEEEEE', { locale: es })
 	)
 }
 

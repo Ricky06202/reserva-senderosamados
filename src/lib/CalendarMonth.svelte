@@ -69,7 +69,7 @@
 	</header>
 
 	<div class="calendar-weekdays" aria-hidden="true">
-		{#each weekdayLabels as weekday (weekday)}
+		{#each weekdayLabels as weekday, index (index)}
 			<span>{weekday}</span>
 		{/each}
 	</div>

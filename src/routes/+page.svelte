@@ -46,6 +46,7 @@
 	let statuses = $state<ApiStatus[]>([])
 	let calendarSettings = $state<CalendarRoomSettings[]>([])
 	let loading = $state(true)
+	let refreshing = $state(false)
 	let sessionReady = $state(false)
 	let accessIssue = $state<'signed-out' | 'unauthorized' | null>(null)
 	let savingCalendar = $state('')
@@ -143,11 +144,13 @@
 			sessionReady = true
 			accessIssue = null
 			loading = false
+			refreshing = false
 			loadError = ''
 			return
 		}
 
-		loading = true
+		if (sessionReady) refreshing = true
+		else loading = true
 		loadError = ''
 		try {
 			const [nextReservations, nextRooms, nextStatuses] = await Promise.all([
@@ -175,6 +178,7 @@
 			}
 		} finally {
 			loading = false
+			refreshing = false
 		}
 	}
 
@@ -576,10 +580,9 @@
 		{/if}
 
 		{#if loading}
-			<section class="loading-panel card" aria-live="polite">
-				<div class="loading-mark"><RefreshCw size={21} aria-hidden="true" /></div>
-				<strong>Cargando las reservas…</strong>
-				<span>Un momento, por favor.</span>
+			<section class="loading-panel" aria-live="polite">
+				<RefreshCw size={16} aria-hidden="true" />
+				<span>Cargando reservas…</span>
 			</section>
 		{/if}
 		{#if !loading && accessIssue && !sessionReady && !isPreviewMode}
@@ -601,8 +604,8 @@
 					<option value="all">Todos los alojamientos</option>
 					{#each rooms as room (room.id)}<option value={String(room.id)}>{room.nombre}</option>{/each}
 				</select>
-				<button class="button button-quiet refresh-button" type="button" onclick={() => void loadData()}>
-					<RefreshCw size={16} aria-hidden="true" /><span>Actualizar</span>
+				<button class="button button-quiet refresh-button" type="button" onclick={() => void loadData()} disabled={refreshing}>
+					<RefreshCw size={16} aria-hidden="true" /><span>{refreshing ? 'Actualizando…' : 'Actualizar'}</span>
 				</button>
 			</div>
 			<div class="calendar-layout">
@@ -955,7 +958,6 @@
 		cursor: pointer;
 	}
 
-	.loading-panel,
 	.login-panel {
 		display: grid;
 		justify-items: center;
@@ -966,7 +968,6 @@
 		text-align: center;
 	}
 
-	.loading-mark,
 	.login-icon,
 	.empty-icon,
 	.settings-icon,
@@ -980,12 +981,19 @@
 		color: var(--forest);
 	}
 
-	.loading-mark :global(svg) {
-		animation: spin 1.3s linear infinite;
+	.loading-panel {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		margin: 18px auto;
+		padding: 8px 0;
+		color: var(--muted);
+		font-size: 14px;
 	}
 
-	.loading-panel strong {
-		font-size: 17px;
+	.loading-panel :global(svg) {
+		animation: spin 1.3s linear infinite;
 	}
 
 	.loading-panel span,

@@ -78,6 +78,8 @@ function mapReservation(item: ApiReservation): Reservation {
 		peopleCount: Number(item.cantPersonas) || 0,
 		startDate: item.fechaInicio.slice(0, 10),
 		endDate: item.fechaFin.slice(0, 10),
+		checkInTime: item.horaEntrada ?? '14:00',
+		checkOutTime: item.horaSalida ?? '12:00',
 		totalPrice,
 		amountPaid: numberOrZero(item.abono),
 		status: totalPrice === null ? 'sin monto' : item.estado === 'pagado' ? 'pagado' : 'por cobrar',
@@ -108,7 +110,9 @@ function reservationBody(draft: ReservationDraft) {
 		comisionBooking: draft.totalPrice === null ? '0' : String(draft.bookingCommission),
 		estadoComision: draft.bookingCommissionStatus,
 		fechaInicio: `${draft.startDate}T12:00:00.000Z`,
-		fechaFin: `${draft.endDate}T12:00:00.000Z`
+		fechaFin: `${draft.endDate}T12:00:00.000Z`,
+		horaEntrada: draft.checkInTime,
+		horaSalida: draft.checkOutTime
 	}
 }
 

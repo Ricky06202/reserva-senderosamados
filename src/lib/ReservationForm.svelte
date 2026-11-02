@@ -13,6 +13,8 @@
 		peopleCount: NumericField
 		startDate: string
 		endDate: string
+		checkInTime: string
+		checkOutTime: string
 		totalPrice: NumericField
 		amountPaid: NumericField
 		isPaid: boolean
@@ -47,6 +49,8 @@
 			peopleCount: value && value.peopleCount > 0 ? String(value.peopleCount) : '',
 			startDate: value?.startDate ?? date,
 			endDate: value?.endDate ?? tomorrow,
+			checkInTime: value?.checkInTime ?? '14:00',
+			checkOutTime: value?.checkOutTime ?? '12:00',
 			totalPrice: value?.totalPrice === null || value?.totalPrice === undefined ? '' : String(value.totalPrice),
 			amountPaid: value && value.amountPaid > 0 ? String(value.amountPaid) : '',
 			isPaid: value?.status === 'pagado',
@@ -105,6 +109,10 @@
 			errorMessage = 'La salida debe ser después de la fecha de entrada.'
 			return
 		}
+		if (!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(form.checkInTime) || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(form.checkOutTime)) {
+			errorMessage = 'Indica una hora de entrada y salida válida.'
+			return
+		}
 		if (totalPrice !== null && (!Number.isFinite(totalPrice) || totalPrice < 0)) {
 			errorMessage = 'El monto debe ser un número igual o mayor que cero.'
 			return
@@ -124,6 +132,8 @@
 			peopleCount,
 			startDate: form.startDate,
 			endDate: form.endDate,
+			checkInTime: form.checkInTime,
+			checkOutTime: form.checkOutTime,
 			totalPrice,
 			amountPaid: totalPrice === null ? 0 : amountPaid,
 			statusId: totalPrice === null ? null : stateIdForPaidStatus(),
@@ -185,6 +195,14 @@
 				<div class="field">
 					<label for="reservation-departure">Salida</label>
 					<input id="reservation-departure" type="date" bind:value={form.endDate} min={nextDate} required />
+				</div>
+				<div class="field">
+					<label for="reservation-check-in-time">Hora de entrada</label>
+					<input id="reservation-check-in-time" type="time" step="60" bind:value={form.checkInTime} required />
+				</div>
+				<div class="field">
+					<label for="reservation-check-out-time">Hora de salida</label>
+					<input id="reservation-check-out-time" type="time" step="60" bind:value={form.checkOutTime} required />
 				</div>
 
 				<div class="field span-all">

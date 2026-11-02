@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CalendarDays, CircleDollarSign, House, Pencil, Trash2, UsersRound, X } from 'lucide-svelte'
+	import { CalendarDays, CircleDollarSign, Clock, House, Pencil, Trash2, UsersRound, X } from 'lucide-svelte'
 	import { formatDate, stayNights } from './dates'
 	import type { Reservation } from './types'
 
@@ -29,6 +29,13 @@
 	)
 	const needsDetails = $derived(imported && reservation.peopleCount === 0)
 	const stayLength = $derived(stayNights(reservation.startDate, reservation.endDate))
+	function formatTime(value: string): string {
+		const match = /^(\d{2}):(\d{2})$/.exec(value)
+		if (!match) return value
+		const hour = Number(match[1])
+		const minute = match[2]
+		return `${hour % 12 || 12}:${minute} ${hour < 12 ? 'a. m.' : 'p. m.'}`
+	}
 	const balance = $derived(
 		reservation.totalPrice === null
 			? null
@@ -64,6 +71,8 @@
 				<span class="meta-item"><CalendarDays size={15} aria-hidden="true" />
 					{formatDate(reservation.startDate)} – {formatDate(reservation.endDate)}
 				</span>
+				<span class="meta-item"><Clock size={15} aria-hidden="true" />Entrada {formatTime(reservation.checkInTime)}</span>
+				<span class="meta-item"><Clock size={15} aria-hidden="true" />Salida {formatTime(reservation.checkOutTime)}</span>
 				<span class="meta-item"><House size={15} aria-hidden="true" />{reservation.room}</span>
 				<span class="meta-item">
 					<UsersRound size={15} aria-hidden="true" />

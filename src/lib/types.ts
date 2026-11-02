@@ -13,6 +13,8 @@ export interface Reservation {
 	name: string
 	startDate: string
 	endDate: string
+	checkInTime: string
+	checkOutTime: string
 	peopleCount: number
 	room: string
 	roomId: number | null
@@ -32,6 +34,8 @@ export interface ReservationDraft {
 	peopleCount: number | null
 	startDate: string
 	endDate: string
+	checkInTime: string
+	checkOutTime: string
 	totalPrice: number | null
 	amountPaid: number
 	statusId: number | null
@@ -54,6 +58,8 @@ export interface ApiReservation {
 	estadoComision?: string | null
 	fechaInicio: string
 	fechaFin: string
+	horaEntrada?: string | null
+	horaSalida?: string | null
 	origen?: string | null
 	anotaciones?: Array<{
 		id: number

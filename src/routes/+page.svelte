@@ -273,6 +273,8 @@
 			name: draft.name.trim(),
 			startDate: draft.startDate,
 			endDate: draft.endDate,
+			checkInTime: draft.checkInTime,
+			checkOutTime: draft.checkOutTime,
 			peopleCount: draft.peopleCount ?? 0,
 			room,
 			roomId: draft.roomId,

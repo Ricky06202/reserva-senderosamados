@@ -562,7 +562,7 @@
 			</div>
 		{/if}
 
-		{#if !loading && (sessionReady || isPreviewMode)}
+		{#if loading || sessionReady || isPreviewMode}
 			<nav class="section-nav" aria-label="Secciones de reservas">
 				<button class:active={activeTab === 'calendar'} type="button" aria-current={activeTab === 'calendar' ? 'page' : undefined} onclick={() => switchTab('calendar')}>
 					<CalendarDays size={17} aria-hidden="true" /><span>Calendario</span>
@@ -580,10 +580,28 @@
 		{/if}
 
 		{#if loading}
-			<section class="loading-panel" aria-live="polite">
-				<RefreshCw size={16} aria-hidden="true" />
-				<span>Cargando reservas…</span>
-			</section>
+			{#if activeTab === 'calendar'}
+				<div class="calendar-loading" aria-live="polite">
+					<div class="loading-panel">
+						<RefreshCw size={16} aria-hidden="true" />
+						<span>Cargando reservas…</span>
+					</div>
+					<CalendarMonth
+						{cursor}
+						{selectedDate}
+						reservations={[]}
+						roomFilter="all"
+						onSelectDate={(date) => (selectedDate = date)}
+						onPreviousMonth={() => (cursor = previousMonth(cursor))}
+						onNextMonth={() => (cursor = addMonth(cursor))}
+					/>
+				</div>
+			{:else}
+				<section class="loading-panel" aria-live="polite">
+					<RefreshCw size={16} aria-hidden="true" />
+					<span>Cargando reservas…</span>
+				</section>
+			{/if}
 		{/if}
 		{#if !loading && accessIssue && !sessionReady && !isPreviewMode}
 			<section class="login-panel card">

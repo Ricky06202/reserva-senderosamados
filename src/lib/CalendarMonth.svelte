@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ChevronLeft, ChevronRight, LogOut } from 'lucide-svelte'
+	import { ChevronLeft, ChevronRight, LogIn, LogOut } from 'lucide-svelte'
 	import {
 		calendarDays,
 		dateKey,
@@ -80,10 +80,12 @@
 		{#each days as day (dateKey(day))}
 			{@const key = dateKey(day)}
 			{@const occupied = dayReservations(day)}
+			{@const arrivals = occupied.filter((reservation) => reservation.startDate === key)}
 			{@const departures = dayDepartures(day)}
 			{@const roomIds = [...new Set([...occupied, ...departures].map((reservation) => reservation.roomId))].slice(0, 3)}
 			{@const summary = [
-				occupied.length ? `${occupied.length} reserva${occupied.length === 1 ? '' : 's'}` : '',
+				occupied.length - arrivals.length ? `${occupied.length - arrivals.length} reserva${occupied.length - arrivals.length === 1 ? '' : 's'}` : '',
+				arrivals.length ? `${arrivals.length} entrada${arrivals.length === 1 ? '' : 's'}` : '',
 				departures.length ? `${departures.length} salida${departures.length === 1 ? '' : 's'}` : ''
 			].filter(Boolean).join(', ')}
 			<button
@@ -101,7 +103,12 @@
 				{#if roomIds.length > 0}
 					<span class="day-indicators" aria-hidden="true">
 						{#each roomIds as roomId (roomId ?? 'other')}
-							<RoomMarker {roomId} size={13} departure={departures.some((reservation) => reservation.roomId === roomId)} />
+							<RoomMarker
+								{roomId}
+								size={13}
+								arrival={arrivals.some((reservation) => reservation.roomId === roomId)}
+								departure={departures.some((reservation) => reservation.roomId === roomId)}
+							/>
 						{/each}
 					</span>
 				{/if}
@@ -109,10 +116,11 @@
 		{/each}
 	</div>
 
-	<footer class="calendar-legend" aria-label="Leyenda de alojamientos y salidas">
+	<footer class="calendar-legend" aria-label="Leyenda de alojamientos, entradas y salidas">
 		<span><RoomMarker roomId={1} size={14} />Casa 1</span>
 		<span><RoomMarker roomId={2} size={14} />Casa 2</span>
 		<span><RoomMarker roomId={3} size={14} />Casa 3</span>
+		<span><LogIn size={14} aria-hidden="true" />Entrada</span>
 		<span><LogOut size={14} aria-hidden="true" />Salida</span>
 	</footer>
 </section>

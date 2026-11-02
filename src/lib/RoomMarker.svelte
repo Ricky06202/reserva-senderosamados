@@ -1,13 +1,14 @@
 <script lang="ts">
-	import { LogOut } from 'lucide-svelte'
+	import { LogIn, LogOut } from 'lucide-svelte'
 
 	interface Props {
 		roomId: number | null
 		size?: number
+		arrival?: boolean
 		departure?: boolean
 	}
 
-	let { roomId, size = 14, departure = false }: Props = $props()
+	let { roomId, size = 14, arrival = false, departure = false }: Props = $props()
 
 	function shapeClass(): string {
 		if (roomId === 1) return 'room-one'
@@ -17,10 +18,27 @@
 	}
 </script>
 
-<span class="room-marker-wrap" style={`--marker-size: ${size}px`} aria-hidden="true">
+<span
+	class="room-marker-wrap"
+	style={`--marker-size: ${size}px`}
+	aria-hidden="true"
+>
 	<span class={`room-marker ${shapeClass()}`}></span>
-	{#if departure}
-		<LogOut class="departure-mark" size={8} strokeWidth={3} aria-hidden="true" />
+	{#if arrival || departure}
+		<span class="event-arrows">
+			{#if arrival}
+				<span class="event-arrow">
+					<span class="event-arrow-outline"><LogIn size={7} strokeWidth={5} /></span>
+					<span class="event-arrow-ink"><LogIn size={7} strokeWidth={2.5} /></span>
+				</span>
+			{/if}
+			{#if departure}
+				<span class="event-arrow">
+					<span class="event-arrow-outline"><LogOut size={7} strokeWidth={5} /></span>
+					<span class="event-arrow-ink"><LogOut size={7} strokeWidth={2.5} /></span>
+				</span>
+			{/if}
+		</span>
 	{/if}
 </span>
 
@@ -36,7 +54,10 @@
 
 	.room-marker {
 		position: absolute;
-		inset: 0;
+		top: 0;
+		left: 0;
+		width: var(--marker-size);
+		height: var(--marker-size);
 		background: transparent;
 		filter: drop-shadow(0 0 1px #23362b);
 	}
@@ -92,16 +113,39 @@
 		border-radius: 1px;
 	}
 
-	.departure-mark {
+	.event-arrows {
 		position: absolute;
-		right: -2px;
-		bottom: -2px;
+		top: -8px;
+		left: 50%;
 		z-index: 1;
-		box-sizing: content-box;
-		padding: 1px;
-		border-radius: 50%;
-		background: #fff;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 1px;
+		height: 7px;
+		transform: translateX(-50%);
+	}
+
+	.event-arrow {
+		position: relative;
+		flex: 0 0 7px;
+		width: 7px;
+		height: 7px;
+	}
+
+	.event-arrow-outline,
+	.event-arrow-ink {
+		position: absolute;
+		inset: 0;
+		display: grid;
+		place-items: center;
+	}
+
+	.event-arrow-outline {
 		color: #23362b;
-		filter: drop-shadow(0 0 1px #fff);
+	}
+
+	.event-arrow-ink {
+		color: #fff;
 	}
 </style>

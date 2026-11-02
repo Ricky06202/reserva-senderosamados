@@ -662,8 +662,8 @@
 						<div class="day-reservations">
 							{#each selectedReservations as reservation (reservation.id)}
 								<button class="day-reservation" type="button" onclick={() => openEditReservation(reservation)}>
-									<RoomMarker roomId={reservation.roomId} size={15} />
-									<span class="day-reservation-copy"><strong>{reservation.name}</strong><small>{reservation.room} · {formatDate(reservation.startDate)}–{formatDate(reservation.endDate)}</small></span>
+									<RoomMarker roomId={reservation.roomId} size={15} arrival={reservation.startDate === selectedDate} />
+									<span class="day-reservation-copy"><strong>{reservation.name}</strong><small>{reservation.startDate === selectedDate ? 'Entrada · ' : ''}{reservation.room} · {formatDate(reservation.startDate)}–{formatDate(reservation.endDate)}</small></span>
 									<ChevronRight size={17} aria-hidden="true" />
 								</button>
 							{/each}

@@ -83,6 +83,14 @@
 			.sort((a, b) => a.startDate.localeCompare(b.startDate))
 	)
 
+	const upcomingReservations = $derived.by(() => {
+		const today = todayKey()
+		return reservations
+			.filter((reservation) => reservation.startDate >= today)
+			.sort((a, b) => a.startDate.localeCompare(b.startDate))
+			.slice(0, 3)
+	})
+
 	const filteredReservations = $derived.by(() => {
 		const query = listQuery.trim().toLocaleLowerCase('es-PA')
 		return [...reservations]
@@ -612,14 +620,14 @@
 					<div><p class="eyebrow">Vista rápida</p><h2>Próximas reservas</h2></div>
 					<button class="text-button" type="button" onclick={() => switchTab('list')}>Ver todas <ChevronRight size={16} aria-hidden="true" /></button>
 				</div>
-				{#if reservations.length}
+				{#if upcomingReservations.length}
 					<div class="reservation-list compact-list">
-						{#each [...reservations].sort((a, b) => a.startDate.localeCompare(b.startDate)).slice(0, 3) as reservation (reservation.id)}
+						{#each upcomingReservations as reservation (reservation.id)}
 							<ReservationCard {reservation} onEdit={openEditReservation} onDelete={(item) => (pendingDelete = item)} onAddAnnotation={addAnnotation} onDeleteAnnotation={deleteAnnotation} />
 						{/each}
 					</div>
 				{:else}
-					<div class="card empty-list"><CalendarDays size={20} aria-hidden="true" /><span>Cuando agreguen la primera reserva, aparecerá aquí.</span></div>
+					<div class="card empty-list"><CalendarDays size={20} aria-hidden="true" /><span>No hay próximas reservas. Las anteriores siguen en «Ver todas».</span></div>
 				{/if}
 			</section>
 		{/if}

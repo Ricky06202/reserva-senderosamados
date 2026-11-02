@@ -36,11 +36,11 @@
 	const weekdayLabels = weekdays()
 	const today = todayKey()
 
-	function roomColor(roomId: number | null): string {
-		if (roomId === 1) return '#477b54'
-		if (roomId === 2) return '#bd7440'
-		if (roomId === 3) return '#628293'
-		return '#807f59'
+	function roomMarkerClass(roomId: number | null): string {
+		if (roomId === 1) return 'room-one'
+		if (roomId === 2) return 'room-two'
+		if (roomId === 3) return 'room-three'
+		return 'room-other'
 	}
 
 	function dayReservations(day: Date): Reservation[] {
@@ -93,7 +93,7 @@
 				{#if occupied.length > 0}
 					<span class="day-indicators" aria-hidden="true">
 						{#each [...new Set(occupied.map((reservation) => reservation.roomId))].slice(0, 3) as roomId (roomId)}
-							<span class="room-dot" style={`--room-color:${roomColor(roomId)}`}></span>
+							<span class={`room-dot ${roomMarkerClass(roomId)}`}></span>
 						{/each}
 					</span>
 					<span class="sr-only">{occupied.length} reserva{occupied.length === 1 ? '' : 's'}</span>
@@ -102,10 +102,10 @@
 		{/each}
 	</div>
 
-	<footer class="calendar-legend" aria-label="Leyenda">
-		<span><i class="legend-mark legend-green"></i>Casa 1</span>
-		<span><i class="legend-mark legend-amber"></i>Casa 2</span>
-		<span><i class="legend-mark legend-blue"></i>Casa 3</span>
+	<footer class="calendar-legend" aria-label="Leyenda de alojamientos">
+		<span><i class="legend-mark room-one" aria-hidden="true"></i>Casa 1</span>
+		<span><i class="legend-mark room-two" aria-hidden="true"></i>Casa 2</span>
+		<span><i class="legend-mark room-three" aria-hidden="true"></i>Casa 3</span>
 	</footer>
 </section>
 
@@ -218,7 +218,7 @@
 
 	.day-indicators {
 		display: flex;
-		min-height: 7px;
+		min-height: 12px;
 		align-items: center;
 		justify-content: center;
 		gap: 4px;
@@ -227,21 +227,43 @@
 	.room-dot,
 	.legend-mark {
 		display: inline-block;
-		width: 7px;
-		height: 7px;
-		border-radius: 50%;
+		flex: 0 0 auto;
+		width: 9px;
+		height: 9px;
+		border: 1px solid #fff;
+		box-shadow: 0 0 0 1px #34443a;
 		background: var(--room-color, var(--forest));
+	}
+
+	.room-one {
+		--room-color: #19743a;
+		border-radius: 50%;
+	}
+
+	.room-two {
+		--room-color: #a64b00;
+		clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+	}
+
+	.room-three {
+		--room-color: #225da8;
+		clip-path: polygon(50% 0, 100% 100%, 0 100%);
+	}
+
+	.room-other {
+		--room-color: #665d12;
+		border-radius: 2px;
 	}
 
 	.calendar-legend {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 14px;
+		gap: 16px;
 		margin-top: 18px;
 		padding-top: 14px;
 		border-top: 1px solid #edf1eb;
 		color: var(--muted);
-		font-size: 12px;
+		font-size: 13px;
 	}
 
 	.calendar-legend span {
@@ -251,20 +273,8 @@
 	}
 
 	.legend-mark {
-		width: 8px;
-		height: 8px;
-	}
-
-	.legend-green {
-		background: #477b54;
-	}
-
-	.legend-amber {
-		background: #bd7440;
-	}
-
-	.legend-blue {
-		background: #628293;
+		width: 12px;
+		height: 12px;
 	}
 
 	@media (max-width: 640px) {
@@ -302,10 +312,10 @@
 		}
 
 		.calendar-legend {
-			gap: 10px;
+			gap: 12px;
 			margin-top: 13px;
 			padding-top: 11px;
-			font-size: 11px;
+			font-size: 12px;
 		}
 	}
 </style>

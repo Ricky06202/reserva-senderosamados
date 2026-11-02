@@ -258,6 +258,31 @@
 		formOpen = true
 	}
 
+	function reservationFromDraft(draft: ReservationDraft, id: string, existing?: Reservation): Reservation {
+		const room = rooms.find((item) => item.id === draft.roomId)?.nombre ?? existing?.room ?? 'Hospedaje'
+		const selectedStatus = statuses.find((item) => item.id === draft.statusId)?.nombre
+		const status: Reservation['status'] =
+			draft.totalPrice === null ? 'sin monto' : selectedStatus === 'pagado' ? 'pagado' : 'por cobrar'
+
+		return {
+			id,
+			name: draft.name.trim(),
+			startDate: draft.startDate,
+			endDate: draft.endDate,
+			peopleCount: draft.peopleCount ?? 0,
+			room,
+			roomId: draft.roomId,
+			totalPrice: draft.totalPrice,
+			amountPaid: draft.totalPrice === null ? 0 : draft.amountPaid,
+			status,
+			statusId: draft.totalPrice === null ? null : draft.statusId,
+			bookingCommission: draft.totalPrice === null ? 0 : draft.bookingCommission,
+			bookingCommissionStatus: draft.bookingCommissionStatus,
+			origin: existing?.origin ?? 'manual',
+			anotaciones: existing?.anotaciones ?? []
+		}
+	}
+
 	async function saveReservation(draft: ReservationDraft) {
 		if (isPreviewMode) {
 			const room = rooms.find((item) => item.id === draft.roomId)?.nombre ?? 'Hospedaje'
@@ -292,12 +317,18 @@
 		}
 
 		if (editingReservation) {
-			await api.updateReservation(editingReservation.id, draft)
-		} else {
-			await api.createReservation(draft)
+			const current = editingReservation
+			await api.updateReservation(current.id, draft)
+			reservations = reservations.map((item) =>
+				item.id === current.id ? reservationFromDraft(draft, current.id, item) : item
+			)
+			notice = 'Cambios guardados.'
+			return
 		}
-		await loadData()
-		notice = editingReservation ? 'Cambios guardados.' : 'Reserva creada.'
+
+		const id = await api.createReservation(draft)
+		reservations = [reservationFromDraft(draft, id), ...reservations]
+		notice = 'Reserva creada.'
 	}
 
 	async function confirmDelete() {

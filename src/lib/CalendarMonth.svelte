@@ -200,6 +200,10 @@
 		color: #fff;
 	}
 
+	.day-cell.selected.today .day-number {
+		color: #fff;
+	}
+
 	.day-number {
 		display: grid;
 		width: 30px;

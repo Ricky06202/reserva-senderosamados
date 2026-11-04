@@ -82,7 +82,9 @@
 			{@const occupied = dayReservations(day)}
 			{@const arrivals = occupied.filter((reservation) => reservation.startDate === key)}
 			{@const departures = dayDepartures(day)}
-			{@const roomIds = [...new Set([...occupied, ...departures].map((reservation) => reservation.roomId))].slice(0, 3)}
+			{@const roomIds = [...new Set([...occupied, ...departures].map((reservation) => reservation.roomId))]
+				.sort((a, b) => (a ?? Number.MAX_SAFE_INTEGER) - (b ?? Number.MAX_SAFE_INTEGER))
+				.slice(0, 3)}
 			{@const summary = [
 				occupied.length - arrivals.length ? `${occupied.length - arrivals.length} reserva${occupied.length - arrivals.length === 1 ? '' : 's'}` : '',
 				arrivals.length ? `${arrivals.length} entrada${arrivals.length === 1 ? '' : 's'}` : '',

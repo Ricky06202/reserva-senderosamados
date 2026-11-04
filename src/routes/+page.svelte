@@ -29,6 +29,7 @@
 
 	type Tab = 'calendar' | 'list' | 'reports' | 'settings'
 	type CalendarFeedback = { kind: 'pending' | 'success' | 'error'; message: string }
+	type SelectedDayReservation = { reservation: Reservation; isDeparture: boolean }
 	type InstallPromptEvent = Event & {
 		prompt: () => Promise<void>
 		userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>
@@ -76,23 +77,23 @@
 	let reportStart = $state(`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-01`)
 	let reportEnd = $state(todayKey())
 
-	const selectedReservations = $derived.by(() =>
-		reservations
-			.filter((reservation) => {
-				if (roomFilter !== 'all' && String(reservation.roomId) !== roomFilter) return false
-				return selectedDate >= reservation.startDate && selectedDate < reservation.endDate
-			})
-			.sort((a, b) => a.startDate.localeCompare(b.startDate))
-	)
-
-	const selectedDepartures = $derived.by(() =>
-		reservations
-			.filter((reservation) => {
-				if (roomFilter !== 'all' && String(reservation.roomId) !== roomFilter) return false
-				return reservation.endDate === selectedDate
-			})
-			.sort((a, b) => a.startDate.localeCompare(b.startDate))
-	)
+	const selectedDayReservations = $derived.by(() => {
+		const items: SelectedDayReservation[] = []
+		for (const reservation of reservations) {
+			if (roomFilter !== 'all' && String(reservation.roomId) !== roomFilter) continue
+			if (selectedDate >= reservation.startDate && selectedDate < reservation.endDate) {
+				items.push({ reservation, isDeparture: false })
+			} else if (reservation.endDate === selectedDate) {
+				items.push({ reservation, isDeparture: true })
+			}
+		}
+		return items.sort((a, b) => {
+			const roomOrder =
+				(a.reservation.roomId ?? Number.MAX_SAFE_INTEGER) -
+				(b.reservation.roomId ?? Number.MAX_SAFE_INTEGER)
+			return roomOrder || a.reservation.startDate.localeCompare(b.reservation.startDate)
+		})
+	})
 
 	const upcomingReservations = $derived.by(() => {
 		const today = todayKey()
@@ -658,19 +659,18 @@
 							<Plus size={19} aria-hidden="true" />
 						</button>
 					</header>
-					{#if selectedReservations.length || selectedDepartures.length}
+					{#if selectedDayReservations.length}
 						<div class="day-reservations">
-							{#each selectedReservations as reservation (reservation.id)}
+							{#each selectedDayReservations as item (item.reservation.id)}
+								{@const reservation = item.reservation}
 								<button class="day-reservation" type="button" onclick={() => openEditReservation(reservation)}>
-									<RoomMarker roomId={reservation.roomId} size={15} arrival={reservation.startDate === selectedDate} />
-									<span class="day-reservation-copy"><strong>{reservation.name}</strong><small>{reservation.startDate === selectedDate ? 'Entrada · ' : ''}{reservation.room} · {formatDate(reservation.startDate)}–{formatDate(reservation.endDate)}</small></span>
-									<ChevronRight size={17} aria-hidden="true" />
-								</button>
-							{/each}
-							{#each selectedDepartures as reservation (reservation.id)}
-								<button class="day-reservation" type="button" onclick={() => openEditReservation(reservation)}>
-									<RoomMarker roomId={reservation.roomId} size={15} departure />
-									<span class="day-reservation-copy"><strong>{reservation.name}</strong><small>Salida · {reservation.room} · {formatDate(reservation.startDate)}–{formatDate(reservation.endDate)}</small></span>
+									<RoomMarker
+										roomId={reservation.roomId}
+										size={15}
+										arrival={!item.isDeparture && reservation.startDate === selectedDate}
+										departure={item.isDeparture}
+									/>
+									<span class="day-reservation-copy"><strong>{reservation.name}</strong><small>{item.isDeparture ? 'Salida · ' : reservation.startDate === selectedDate ? 'Entrada · ' : ''}{reservation.room} · {formatDate(reservation.startDate)}–{formatDate(reservation.endDate)}</small></span>
 									<ChevronRight size={17} aria-hidden="true" />
 								</button>
 							{/each}
